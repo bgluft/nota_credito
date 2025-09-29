@@ -17,9 +17,16 @@ except ImportError as e:
     print("Verifique se backend_data.py existe e se 'customtkinter' está instalado.")
     exit()
 
+# --- Cores Customizadas ---
+CTK_COLOR_PRIMARY = "#20466E"  # Azul Marinho Principal
+CTK_COLOR_SECONDARY = "#3498DB" # Azul Claro
+CTK_COLOR_SUCCESS = "#2ECC71"  # Verde para Gerar Nota
+CTK_COLOR_ACCENT = "#95A5A6"   # Cinza para Imprimir
+
 # --- Cores para Listbox (Zebrado) ---
-COLOR_LIGHT = "#E0E0E0"  # Cinza claro para linhas pares
-COLOR_DARK = "#FFFFFF"   # Branco para linhas ímpares
+COLOR_LIST_EVEN = "#F4F4F4"  # Cinza claro para linhas pares
+COLOR_LIST_ODD = "#FFFFFF"   # Branco para linhas ímpares
+
 
 # --- Classe Principal da Aplicação GUI ---
 
@@ -44,11 +51,13 @@ class CreditNoteApp(ctk.CTk):
         self.grid_rowconfigure(0, weight=1)
 
         # --- Frames ---
-        self.client_frame = ctk.CTkFrame(self)
-        self.client_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+        # Frame de Gerenciamento de Clientes (Mais escuro para contraste)
+        self.client_frame = ctk.CTkFrame(self, fg_color=("gray90", "gray10"))
+        self.client_frame.grid(row=0, column=0, padx=15, pady=15, sticky="nsew")
 
-        self.note_frame = ctk.CTkFrame(self)
-        self.note_frame.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
+        # Frame de Geração de Nota (Mais claro)
+        self.note_frame = ctk.CTkFrame(self, fg_color=("white", "gray15"))
+        self.note_frame.grid(row=0, column=1, padx=15, pady=15, sticky="nsew")
 
         # Configurações internas dos frames
         self._setup_client_management(self.client_frame)
@@ -60,26 +69,32 @@ class CreditNoteApp(ctk.CTk):
         master.grid_columnconfigure(0, weight=1)
         master.grid_rowconfigure(5, weight=1)
 
-        ctk.CTkLabel(master, text="Gestão de Clientes", font=ctk.CTkFont(size=16, weight="bold")).grid(row=0, column=0, padx=10, pady=(10, 5), sticky="ew")
+        # Título da Seção
+        ctk.CTkLabel(master, 
+                     text="📋 Gestão de Clientes", 
+                     font=ctk.CTkFont(size=18, weight="bold"),
+                     text_color=CTK_COLOR_PRIMARY
+                     ).grid(row=0, column=0, padx=20, pady=(20, 10), sticky="ew")
 
-        # Campos de busca e ação
-        self.client_search_entry = ctk.CTkEntry(master, placeholder_text="Buscar por Código ou Nome")
-        self.client_search_entry.grid(row=1, column=0, padx=10, pady=(0, 10), sticky="ew")
+        # Campo de busca
+        self.client_search_entry = ctk.CTkEntry(master, placeholder_text="Buscar por Código ou Nome...", corner_radius=10)
+        self.client_search_entry.grid(row=1, column=0, padx=20, pady=(0, 15), sticky="ew")
         self.client_search_entry.bind("<KeyRelease>", self._filter_client_list)
 
-        button_frame = ctk.CTkFrame(master)
-        button_frame.grid(row=2, column=0, padx=10, pady=5, sticky="ew")
+        # Botões de Ação
+        button_frame = ctk.CTkFrame(master, fg_color="transparent")
+        button_frame.grid(row=2, column=0, padx=20, pady=5, sticky="ew")
         button_frame.grid_columnconfigure((0, 1, 2), weight=1)
 
-        ctk.CTkButton(button_frame, text="Cadastrar", command=self._add_client_dialog).grid(row=0, column=0, padx=5, pady=5, sticky="ew")
-        ctk.CTkButton(button_frame, text="Editar", command=self._edit_client_dialog).grid(row=0, column=1, padx=5, pady=5, sticky="ew")
-        ctk.CTkButton(button_frame, text="Excluir", command=self._delete_client).grid(row=0, column=2, padx=5, pady=5, sticky="ew")
+        ctk.CTkButton(button_frame, text="Novo", command=self._add_client_dialog, fg_color=CTK_COLOR_SECONDARY, hover_color="#2980B9", corner_radius=10).grid(row=0, column=0, padx=5, pady=5, sticky="ew")
+        ctk.CTkButton(button_frame, text="Editar", command=self._edit_client_dialog, fg_color=CTK_COLOR_SECONDARY, hover_color="#2980B9", corner_radius=10).grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        ctk.CTkButton(button_frame, text="Excluir", command=self._delete_client, fg_color="#E74C3C", hover_color="#C0392B", corner_radius=10).grid(row=0, column=2, padx=5, pady=5, sticky="ew")
 
-        ctk.CTkLabel(master, text="Clientes Encontrados (Clique para Selecionar):", anchor="w").grid(row=3, column=0, padx=10, pady=(5, 0), sticky="ew")
+        ctk.CTkLabel(master, text="Clientes Cadastrados:", anchor="w", font=ctk.CTkFont(weight="bold")).grid(row=3, column=0, padx=20, pady=(10, 5), sticky="ew")
 
-        # Listbox para clientes
-        list_frame = ctk.CTkFrame(master)
-        list_frame.grid(row=4, column=0, padx=10, pady=(0, 10), sticky="nsew")
+        # Listbox para clientes (Listbox nativa para zebrado)
+        list_frame = ctk.CTkFrame(master, corner_radius=10)
+        list_frame.grid(row=4, column=0, padx=20, pady=(0, 20), sticky="nsew")
         list_frame.grid_columnconfigure(0, weight=1)
         list_frame.grid_rowconfigure(0, weight=1)
 
@@ -91,12 +106,12 @@ class CreditNoteApp(ctk.CTk):
             selectmode=tk.SINGLE, 
             font=("Inter", 12),
             fg="#202020",
-            selectbackground="#0074D9",
+            selectbackground=CTK_COLOR_SECONDARY,
             selectforeground="white"
         )
-        self.client_listbox.grid(row=0, column=0, sticky="nsew")
+        self.client_listbox.grid(row=0, column=0, sticky="nsew", padx=1, pady=1)
 
-        scrollbar = Scrollbar(list_frame, orient="vertical", command=self.client_listbox.yview)
+        scrollbar = ctk.CTkScrollbar(list_frame, command=self.client_listbox.yview)
         scrollbar.grid(row=0, column=1, sticky="ns")
         self.client_listbox.config(yscrollcommand=scrollbar.set)
 
@@ -125,9 +140,9 @@ class CreditNoteApp(ctk.CTk):
                 self.client_listbox.insert(tk.END, display_text)
                 
                 if listbox_index % 2 == 0:
-                    bg_color = COLOR_DARK
+                    bg_color = COLOR_LIST_ODD
                 else:
-                    bg_color = COLOR_LIGHT
+                    bg_color = COLOR_LIST_EVEN
                 
                 self.client_listbox.itemconfig(tk.END, {'bg': bg_color})
                 
@@ -150,7 +165,8 @@ class CreditNoteApp(ctk.CTk):
             self.client_code_var.set(self.selected_client['codigo'])
             self.client_name_label.configure(text=self.selected_client['nome'])
             
-            messagebox.showinfo("Cliente Selecionado", f"Cliente {self.selected_client['nome']} selecionado para a nota.")
+            # Não usar messagebox para seleção, apenas feedback visual ou na barra de status
+            # messagebox.showinfo("Cliente Selecionado", f"Cliente {self.selected_client['nome']} selecionado para a nota.")
 
         except Exception as e:
             print(f"Erro ao selecionar cliente: {e}")
@@ -186,11 +202,11 @@ class CreditNoteApp(ctk.CTk):
         modal.geometry(f'+{x}+{y}')
 
         ctk.CTkLabel(modal, text="Código Único:").pack(pady=(10, 0), padx=10)
-        code_entry = ctk.CTkEntry(modal, width=300)
+        code_entry = ctk.CTkEntry(modal, width=300, corner_radius=10)
         code_entry.pack(padx=10)
 
         ctk.CTkLabel(modal, text="Nome (Razão Social):").pack(pady=(10, 0), padx=10)
-        name_entry = ctk.CTkEntry(modal, width=300)
+        name_entry = ctk.CTkEntry(modal, width=300, corner_radius=10)
         name_entry.pack(padx=10)
 
         original_code = None
@@ -235,7 +251,7 @@ class CreditNoteApp(ctk.CTk):
             self._update_client_list(self.client_search_entry.get())
             modal.destroy()
 
-        ctk.CTkButton(modal, text="Salvar", command=save_client).pack(pady=20, padx=10)
+        ctk.CTkButton(modal, text="Salvar", command=save_client, fg_color=CTK_COLOR_SUCCESS, hover_color="#27AE60", corner_radius=10).pack(pady=20, padx=10)
 
     def _delete_client(self):
         """Exclui o cliente selecionado."""
@@ -261,69 +277,95 @@ class CreditNoteApp(ctk.CTk):
         master.grid_columnconfigure(0, weight=1)
         master.grid_rowconfigure(5, weight=1)
 
-        ctk.CTkLabel(master, text="Geração de Nota de Crédito", font=ctk.CTkFont(size=16, weight="bold")).grid(row=0, column=0, padx=10, pady=(10, 5), sticky="ew")
+        # Título da Seção
+        ctk.CTkLabel(master, 
+                     text="📝 Geração de Nota de Crédito", 
+                     font=ctk.CTkFont(size=18, weight="bold"),
+                     text_color=CTK_COLOR_PRIMARY
+                     ).grid(row=0, column=0, padx=20, pady=(20, 10), sticky="ew")
 
         # 1. Dados da Fatura (Data e Número)
-        data_frame = ctk.CTkFrame(master)
-        data_frame.grid(row=1, column=0, padx=10, pady=5, sticky="ew")
+        data_frame = ctk.CTkFrame(master, fg_color="transparent")
+        data_frame.grid(row=1, column=0, padx=20, pady=10, sticky="ew")
         data_frame.grid_columnconfigure((0, 1), weight=1)
 
         # Data
-        ctk.CTkLabel(data_frame, text="Data (DD/MM/AAAA):").grid(row=0, column=0, padx=10, pady=(5, 0), sticky="w")
+        ctk.CTkLabel(data_frame, text="Data (DD/MM/AAAA):", anchor="w").grid(row=0, column=0, padx=5, pady=(5, 0), sticky="w")
         self.date_var = tk.StringVar(value=datetime.date.today().strftime("%d/%m/%Y"))
         self.date_var.trace_add("write", self._format_date_input)
-        self.date_entry = ctk.CTkEntry(data_frame, textvariable=self.date_var)
-        self.date_entry.grid(row=1, column=0, padx=10, pady=(0, 5), sticky="ew")
+        self.date_entry = ctk.CTkEntry(data_frame, textvariable=self.date_var, corner_radius=10)
+        self.date_entry.grid(row=1, column=0, padx=5, pady=(0, 5), sticky="ew")
 
         # Número da Fatura
-        ctk.CTkLabel(data_frame, text="Número da Fatura (Próx. Sugerido: {}):"
-            .format(self.estado['ultima_fatura'])).grid(row=0, column=1, padx=10, pady=(5, 0), sticky="w")
+        self.invoice_label = ctk.CTkLabel(data_frame, text="Número da Fatura (Próx. Sugerido: {}):"
+            .format(self.estado['ultima_fatura']), anchor="w")
+        self.invoice_label.grid(row=0, column=1, padx=5, pady=(5, 0), sticky="w")
         self.invoice_number_var = ctk.StringVar(value=str(self.estado['ultima_fatura']))
-        self.invoice_number_entry = ctk.CTkEntry(data_frame, textvariable=self.invoice_number_var)
-        self.invoice_number_entry.grid(row=1, column=1, padx=10, pady=(0, 5), sticky="ew")
+        self.invoice_number_entry = ctk.CTkEntry(data_frame, textvariable=self.invoice_number_var, corner_radius=10)
+        self.invoice_number_entry.grid(row=1, column=1, padx=5, pady=(0, 5), sticky="ew")
 
         # 2. Dados do Cliente
-        client_info_frame = ctk.CTkFrame(master)
-        client_info_frame.grid(row=2, column=0, padx=10, pady=5, sticky="ew")
+        client_info_frame = ctk.CTkFrame(master, fg_color="transparent")
+        client_info_frame.grid(row=2, column=0, padx=20, pady=10, sticky="ew")
         client_info_frame.grid_columnconfigure(0, weight=1)
 
-        ctk.CTkLabel(client_info_frame, text="Cliente Selecionado:", font=ctk.CTkFont(weight="bold")).grid(row=0, column=0, padx=10, pady=(5, 0), sticky="w")
+        ctk.CTkLabel(client_info_frame, text="Cliente Selecionado:", font=ctk.CTkFont(weight="bold"), text_color=CTK_COLOR_PRIMARY).grid(row=0, column=0, padx=5, pady=(5, 0), sticky="w")
 
+        code_name_frame = ctk.CTkFrame(client_info_frame, fg_color="transparent")
+        code_name_frame.grid(row=1, column=0, sticky="ew", padx=5, pady=5)
+        code_name_frame.grid_columnconfigure((0, 1), weight=1)
+
+        # Código
+        ctk.CTkLabel(code_name_frame, text="Código:", anchor="w").grid(row=0, column=0, padx=(0, 5), pady=(0, 0), sticky="w")
         self.client_code_var = ctk.StringVar(value="")
-        ctk.CTkLabel(client_info_frame, text="Código:").grid(row=1, column=0, padx=10, pady=(0, 0), sticky="w")
-        ctk.CTkEntry(client_info_frame, textvariable=self.client_code_var, state="readonly").grid(row=2, column=0, padx=10, pady=(0, 5), sticky="ew")
+        ctk.CTkEntry(code_name_frame, textvariable=self.client_code_var, state="readonly", corner_radius=10, fg_color=("gray85", "gray20")).grid(row=1, column=0, padx=(0, 5), pady=(0, 5), sticky="ew")
 
-        ctk.CTkLabel(client_info_frame, text="Nome (Razão Social):").grid(row=3, column=0, padx=10, pady=(0, 0), sticky="w")
-        self.client_name_label = ctk.CTkLabel(client_info_frame, text="Nenhum cliente selecionado", anchor="w", fg_color=("gray85", "gray25"), corner_radius=5)
-        self.client_name_label.grid(row=4, column=0, padx=10, pady=(0, 10), sticky="ew", ipady=5)
+        # Nome
+        ctk.CTkLabel(code_name_frame, text="Razão Social:", anchor="w").grid(row=0, column=1, padx=(5, 0), pady=(0, 0), sticky="w")
+        self.client_name_label = ctk.CTkLabel(code_name_frame, text="Nenhum cliente selecionado", anchor="w", fg_color=("gray85", "gray20"), corner_radius=10, text_color=CTK_COLOR_PRIMARY)
+        self.client_name_label.grid(row=1, column=1, padx=(5, 0), pady=(0, 5), sticky="ew", ipady=5)
 
 
         # 3. Valor e Descrição
-        value_desc_frame = ctk.CTkFrame(master)
-        value_desc_frame.grid(row=3, column=0, padx=10, pady=5, sticky="ew")
+        value_desc_frame = ctk.CTkFrame(master, fg_color="transparent")
+        value_desc_frame.grid(row=3, column=0, padx=20, pady=10, sticky="ew")
         value_desc_frame.grid_columnconfigure(0, weight=1)
 
         # Valor da Fatura
-        ctk.CTkLabel(value_desc_frame, text="Valor da Fatura (R$):").grid(row=0, column=0, padx=10, pady=(5, 0), sticky="w")
+        ctk.CTkLabel(value_desc_frame, text="Valor da Fatura (R$):", anchor="w").grid(row=0, column=0, padx=5, pady=(5, 0), sticky="w")
         self.value_var = tk.StringVar(value="0,00")
         self.value_var.trace_add("write", self._format_currency_input)
-        self.value_entry = ctk.CTkEntry(value_desc_frame, textvariable=self.value_var)
-        self.value_entry.grid(row=1, column=0, padx=10, pady=(0, 10), sticky="ew")
+        self.value_entry = ctk.CTkEntry(value_desc_frame, textvariable=self.value_var, corner_radius=10)
+        self.value_entry.grid(row=1, column=0, padx=5, pady=(0, 10), sticky="ew")
 
         # Descrição/Histórico
-        ctk.CTkLabel(master, text=f"Descrição/Histórico (Última nota: '{self.estado['ultima_descricao'][:30]}...')").grid(row=4, column=0, padx=10, pady=(5, 0), sticky="w")
+        ctk.CTkLabel(master, text=f"Histórico/Descrição (Última nota: '{self.estado['ultima_descricao'][:30]}...'):", font=ctk.CTkFont(weight="bold")).grid(row=4, column=0, padx=20, pady=(5, 0), sticky="w")
         
-        self.description_textbox = ctk.CTkTextbox(master, height=150)
-        self.description_textbox.grid(row=5, column=0, padx=10, pady=(0, 10), sticky="nsew")
+        self.description_textbox = ctk.CTkTextbox(master, height=150, corner_radius=10)
+        self.description_textbox.grid(row=5, column=0, padx=20, pady=(0, 20), sticky="nsew")
         self.description_textbox.insert("1.0", self.estado['ultima_descricao'])
 
         # 4. Botão de Ação
-        action_frame = ctk.CTkFrame(master)
-        action_frame.grid(row=6, column=0, padx=10, pady=10, sticky="ew")
+        action_frame = ctk.CTkFrame(master, fg_color="transparent")
+        action_frame.grid(row=6, column=0, padx=20, pady=10, sticky="ew")
         action_frame.grid_columnconfigure((0, 1), weight=1)
 
-        ctk.CTkButton(action_frame, text="Gerar Nota de Crédito (.xlsx)", command=self._process_note, fg_color="green").grid(row=0, column=0, padx=5, pady=5, sticky="ew")
-        ctk.CTkButton(action_frame, text="Imprimir Última Nota", command=self._print_last_note, fg_color="gray").grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        ctk.CTkButton(action_frame, 
+                      text="✅ Gerar Nota de Crédito (.xlsx)", 
+                      command=self._process_note, 
+                      fg_color=CTK_COLOR_SUCCESS, 
+                      hover_color="#27AE60",
+                      font=ctk.CTkFont(weight="bold"),
+                      corner_radius=10
+                      ).grid(row=0, column=0, padx=5, pady=5, sticky="ew", ipady=5)
+                      
+        ctk.CTkButton(action_frame, 
+                      text="🖨️ Imprimir Última Nota", 
+                      command=self._print_last_note, 
+                      fg_color=CTK_COLOR_ACCENT, 
+                      hover_color="#7F8C8D",
+                      corner_radius=10
+                      ).grid(row=0, column=1, padx=5, pady=5, sticky="ew", ipady=5)
 
     # --- Funções de Formatação e Validação de Input ---
 
@@ -421,7 +463,7 @@ class CreditNoteApp(ctk.CTk):
     # --- Funções de Processamento da Nota ---
 
     def _process_note(self):
-        """Valida os dados e chama o backend para processar e salvar."""
+        """Valida os dados e chama o backend para processar e salvar, e então pergunta sobre a impressão."""
         # 1. Validação dos Dados (Frontend)
         if not self.selected_client:
             messagebox.showerror("Erro de Validação", "Selecione um cliente para prosseguir.")
@@ -469,17 +511,23 @@ class CreditNoteApp(ctk.CTk):
             # 3. Atualiza a GUI com o novo estado
             self.invoice_number_var.set(str(self.estado['ultima_fatura']))
             
-            data_frame_children = self.note_frame.winfo_children()[0].winfo_children()
-            if len(data_frame_children) > 2:
-                data_frame_children[2].configure(text="Número da Fatura (Próx. Sugerido: {}):".format(self.estado['ultima_fatura']))
+            # Atualiza o label de sugestão da fatura
+            self.invoice_label.configure(text="Número da Fatura (Próx. Sugerido: {}):".format(self.estado['ultima_fatura']))
             
             self.description_textbox.delete("1.0", tk.END)
             self.description_textbox.insert("1.0", self.estado['ultima_descricao'])
             self.value_var.set("0,00")
             
-            # 4. Sucesso e Impressão (Abre diretamente)
-            messagebox.showinfo("Nota Gerada com Sucesso", f"Nota salva em:\n{output_path}\n\nO comando de impressão será enviado agora.")
-            self._print_file(output_path)
+            # 4. Sucesso e Pergunta de Impressão (Mudança aqui)
+            
+            # Usa tk.messagebox.askyesno, que retorna True para 'Yes' e False para 'No'
+            if messagebox.askyesno(
+                "Nota Gerada com Sucesso!", 
+                f"Nota salva em:\n{output_path}\n\nDeseja enviar o arquivo para IMPRESSÃO agora?"
+            ):
+                self._print_file(output_path)
+            else:
+                 messagebox.showinfo("Geração Concluída", "A nota foi gerada e salva com sucesso.")
         else:
             messagebox.showerror("Erro de Processamento", result_or_path)
 
@@ -488,12 +536,15 @@ class CreditNoteApp(ctk.CTk):
         """Tenta abrir o arquivo com o programa padrão (o que geralmente abre a caixa de diálogo de impressão)."""
         try:
             if os.name == 'nt':  # Windows
+                # os.startfile("notepad.exe") # Exemplo para abrir o programa
                 os.startfile(filepath, "print")
+                messagebox.showinfo("Comando de Impressão Enviado", "A caixa de diálogo da impressora deve ter sido aberta.")
             elif os.uname()[0] == 'Darwin':  # macOS
                 os.system(f'open -a "Microsoft Excel" -p "{filepath}"')
+                messagebox.showinfo("Comando de Impressão Enviado", "Verifique a fila de impressão do sistema.")
             else:  # Linux (genérico)
                 os.system(f'xdg-open "{filepath}"')
-                messagebox.showinfo("Impressão", "Comando de impressão enviado. Verifique a fila de impressão do sistema.")
+                messagebox.showinfo("Impressão", "Comando enviado. Verifique a fila de impressão do sistema ou abra o arquivo manualmente.")
         except Exception as e:
             messagebox.showerror("Erro de Impressão/Abertura", f"Não foi possível abrir o arquivo para impressão. Tente abrir o arquivo manualmente: {filepath}\nDetalhe: {e}")
 
