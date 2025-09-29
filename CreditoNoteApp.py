@@ -435,63 +435,63 @@ class CreditNoteApp(ctk.CTk):
     # --- Funções de Formatação e Validação de Input ---
 
     def _format_date_input(self, *args):
-        """Formata o campo de data em DD/MM/AAAA em tempo real."""
+        """
+        Formata o campo de data em DD/MM/AAAA em tempo real (Versão corrigida e robusta).
+        """
         current = self.date_var.get()
         cursor_pos = self.date_entry.index(tk.INSERT)
         
-        # 1. Remove caracteres não numéricos
+        # 1. Limpa o valor para obter apenas dígitos, limitando a 8 (DDMMYYYY)
         numeric = re.sub(r'[^0-9]', '', current)
+        numeric = numeric[:8]
 
-        new_value = ''
-        
-        # 2. Insere as barras
+        # 2. Reconstroi o valor formatado inserindo as barras nas posições corretas
+        new_value = ""
         if len(numeric) > 0:
-            new_value += numeric[:2]
-        if len(numeric) >= 3:
-            new_value += '/' + numeric[2:4]
-        if len(numeric) >= 5:
-            new_value += '/' + numeric[4:8]
+            new_value += numeric[0:2]
+        if len(numeric) > 2:
+            new_value += "/" + numeric[2:4]
+        if len(numeric) > 4:
+            new_value += "/" + numeric[4:8]
+        
+        # 3. Calcula a nova posição do cursor com base na posição numérica original
+        
+        # Quantidade de dígitos no texto original antes da posição do cursor
+        old_numeric_prefix = re.sub(r'[^0-9]', '', current[:cursor_pos])
+        target_numeric_length = len(old_numeric_prefix)
+        
+        new_cursor_pos = 0
+        numeric_count = 0
+        
+        # Itera sobre a nova string para encontrar onde o dígito final da parte antiga parou
+        for char in new_value:
+            if char.isdigit():
+                numeric_count += 1
+            
+            new_cursor_pos += 1
+            
+            if numeric_count == target_numeric_length:
+                break
+        
+        # Casos especiais de ajuste do cursor:
+        if target_numeric_length == 0:
+            new_cursor_pos = 0
+        elif cursor_pos >= len(current):
+            # Se o cursor estava no final, ele deve permanecer no final
+            new_cursor_pos = len(new_value)
+        elif len(new_value) > len(current) and new_value[new_cursor_pos - 1] == '/':
+             # Se uma barra foi inserida e o cursor está logo após o dígito, avança sobre a barra
+             new_cursor_pos += 1
 
-        # 3. Garante que o comprimento total não ultrapasse 10 (DD/MM/AAAA)
-        if len(new_value) > 10:
-            new_value = new_value[:10]
-
-        # 4. Atualiza o valor se for diferente para evitar loops
+        # 4. Atualiza o valor e a posição do cursor se o valor mudou
         if new_value != current:
-            # Calcula a nova posição do cursor
-            # Se uma barra foi adicionada logo após a posição original, move o cursor junto
-            
-            # Posições onde barras são adicionadas (após 2 e 5 caracteres numéricos)
-            bar_positions = [2, 5]
-            
-            # Conta quantas barras estão antes da posição numérica que o cursor estava.
-            original_numeric_pos = 0
-            count_bars_added = 0
-            
-            # Mapeia a posição do cursor no string atual para a posição numérica correspondente
-            temp_str = current
-            
-            for i in range(cursor_pos):
-                if temp_str[i].isdigit():
-                    original_numeric_pos += 1
-                
-            # Calcula o deslocamento
-            new_cursor_pos = original_numeric_pos
-            for pos in bar_positions:
-                if new_cursor_pos >= pos and new_cursor_pos + count_bars_added < len(new_value) and new_value[new_cursor_pos + count_bars_added] == '/':
-                    count_bars_added += 1
-            
-            final_cursor_pos = new_cursor_pos + count_bars_added
-            
             self.date_var.set(new_value)
-            
-            # Tenta definir a nova posição do cursor
             try:
-                self.date_entry.icursor(final_cursor_pos)
+                self.date_entry.icursor(new_cursor_pos)
             except:
-                pass # Ignora se o cursor não puder ser definido
+                pass 
         else:
-            # Se o valor não mudou, tenta manter o cursor na posição original (útil ao apagar)
+            # Mantém a posição original se o valor não mudou (e.g., apagando)
             try:
                 self.date_entry.icursor(cursor_pos)
             except:
