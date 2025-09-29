@@ -4,14 +4,26 @@ import re
 import tkinter as tk
 from tkinter import messagebox, Toplevel, Listbox, Scrollbar
 from PIL import Image, ImageTk 
+import sys # Importação necessária para PyInstaller
+
+# --- Função de utilidade para PyInstaller ---
+def _get_resource_path(relative_path):
+    """Obtém o caminho absoluto do recurso, compatível com o PyInstaller."""
+    if hasattr(sys, '_MEIPASS'):
+        # Ambiente PyInstaller (executável)
+        return os.path.join(sys._MEIPASS, relative_path)
+    # Ambiente de desenvolvimento padrão
+    return os.path.join(os.path.abspath("."), relative_path)
+# ---------------------------------------------
 
 # Importa todas as funções de backend e constantes
 try:
     import customtkinter as ctk
     # Certifique-se de que o backend_data.py está no mesmo diretório
+    # A importação do backend é mantida como relativa. O PyInstaller resolve isso.
     from backend_data import (
         load_clientes, save_clientes, load_estado, save_estado,
-        process_and_save_note, SAIDA_FOLDER
+        process_and_save_note, SAIDA_FOLDER, MODELO_FILE
     )
 except ImportError as e:
     print(f"Erro ao importar backend ou customtkinter: {e}")
@@ -115,8 +127,11 @@ class CreditNoteApp(ctk.CTk):
 
         # --- Lógica de Carregamento da Imagem ---
         try:
+            # *USANDO O NOVO UTILITÁRIO DE CAMINHO PARA COMPATIBILIDADE PYINSTALLER*
+            logo_path = _get_resource_path(LOGO_FILEPATH)
+            
             # 1. Carrega a imagem e redimensiona (64x64)
-            img = Image.open(LOGO_FILEPATH)
+            img = Image.open(logo_path)
             img = img.resize((64, 64), Image.Resampling.LANCZOS)
             self.logo_image = ImageTk.PhotoImage(img)
 
@@ -469,7 +484,8 @@ class CreditNoteApp(ctk.CTk):
 
     def _format_date_input(self, *args):
         """
-        Formata o campo de data em DD/MM/AAAA em tempo real.
+        [CORRIGIDO] Formata o campo de data em DD/MM/AAAA em tempo real, 
+        mantendo a posição correta do cursor.
         """
         current = self.date_var.get()
         cursor_pos = self.date_entry.index(tk.INSERT)
@@ -478,6 +494,7 @@ class CreditNoteApp(ctk.CTk):
         numeric = numeric[:8]
 
         new_value = ""
+        # Reconstroi a string formatada
         if len(numeric) > 0:
             new_value += numeric[0:2]
         if len(numeric) > 2:
@@ -485,34 +502,30 @@ class CreditNoteApp(ctk.CTk):
         if len(numeric) > 4:
             new_value += "/" + numeric[4:8]
         
-        old_numeric_prefix = re.sub(r'[^0-9]', '', current[:cursor_pos])
-        target_numeric_length = len(old_numeric_prefix)
+        # Lógica para recalcular a posição do cursor (mais simples e robusta)
         
-        new_cursor_pos = 0
-        numeric_count = 0
+        # Conta quantos dígitos (ou dígitos + barras) existiam ANTES do cursor
+        count_chars_before = 0
+        for i, char in enumerate(current):
+            if i < cursor_pos:
+                count_chars_before += 1
+
+        # A nova posição deve ser onde o mesmo número de caracteres aparecer na nova string
+        new_cursor_pos = count_chars_before
         
-        for char in new_value:
-            if char.isdigit():
-                numeric_count += 1
-            
-            new_cursor_pos += 1
-            
-            if numeric_count == target_numeric_length:
-                break
-        
-        if target_numeric_length == 0:
-            new_cursor_pos = 0
-        elif cursor_pos >= len(current):
-            new_cursor_pos = len(new_value)
-        elif len(new_value) > len(current) and new_value[new_cursor_pos - 1] == '/':
+        # Ajusta a posição se o usuário digitou um dígito que virou '/' (ex: digitou 1,2, agora é 12/)
+        if len(new_value) > len(current) and new_value[new_cursor_pos - 1] == '/':
              new_cursor_pos += 1
+        
+        # Garante que o cursor não vá além do final da nova string
+        new_cursor_pos = min(new_cursor_pos, len(new_value))
 
         if new_value != current:
             self.date_var.set(new_value)
             try:
                 self.date_entry.icursor(new_cursor_pos)
             except:
-                pass 
+                pass
         else:
             try:
                 self.date_entry.icursor(cursor_pos)
