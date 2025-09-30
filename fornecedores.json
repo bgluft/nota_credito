@@ -1,0 +1,14 @@
+[
+    {
+        "nome": "Fornecedor Padrão (Modelo 1)",
+        "modelo": "modelo.xlsx"
+    },
+    {
+        "nome": "BAYER S/A",
+        "modelo": "modelo2.xlsx"
+    },
+    {
+        "nome": "DU PONT DO BRASIL SA",
+        "modelo": "modelo2.xlsx"
+    }
+]

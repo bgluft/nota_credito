@@ -13,7 +13,8 @@ try:
     from backend_data import (
         load_clientes, save_clientes, load_estado, save_estado,
         process_and_save_note, SAIDA_FOLDER, _get_resource_path,
-        load_templates, save_templates # NOVAS FUNÇÕES
+        load_templates, save_templates,
+        load_fornecedores, save_fornecedores, MODELO_FILE # NOVAS FUNÇÕES/CONSTANTES
     )
 except ImportError as e:
     print(f"Erro ao importar backend ou customtkinter: {e}")
@@ -57,11 +58,12 @@ class CreditNoteApp(ctk.CTk):
         # --- Dados do Backend ---
         self.clientes = load_clientes()
         self.estado = load_estado()
-        self.templates = load_templates() # CARREGA NOVOS TEMPLATES
+        self.templates = load_templates() 
+        self.fornecedores = load_fornecedores() # NOVO: Carrega Fornecedores
         self.selected_client = None
         self.last_saved_file = None 
         self.logo_image = None
-        self.selected_template = None # NOVO: Template selecionado
+        self.selected_template = None 
 
         # --- Configuração de Layout (Grid) ---
         self.grid_columnconfigure((0, 1), weight=1)
@@ -97,18 +99,30 @@ class CreditNoteApp(ctk.CTk):
                                        border_color=("#D5DBDB", "#283747"))
         self.note_frame.grid(row=0, column=1, padx=10, pady=0, sticky="nsew")
         
-        # Frame extra para Gerenciamento de Templates na coluna Esquerda
-        self.template_management_frame = ctk.CTkFrame(self.client_frame, 
+        # Frame extra para Gerenciamento de Templates na coluna Esquerda (dividido em duas linhas)
+        management_container = ctk.CTkFrame(self.client_frame, fg_color="transparent")
+        management_container.grid(row=5, column=0, padx=25, pady=(5, 25), sticky="ew")
+        management_container.grid_columnconfigure(0, weight=1)
+        
+        self.template_management_frame = ctk.CTkFrame(management_container, 
                                             fg_color=("#ECF0F1", "gray25"),
                                             corner_radius=10, 
                                             border_width=1,
                                             border_color=("#D5DBDB", "gray20"))
-        self.template_management_frame.grid(row=5, column=0, padx=25, pady=(5, 25), sticky="ew")
+        self.template_management_frame.grid(row=0, column=0, pady=(0, 15), sticky="ew")
+
+        self.supplier_management_frame = ctk.CTkFrame(management_container, # NOVO FRAME
+                                            fg_color=("#ECF0F1", "gray25"),
+                                            corner_radius=10, 
+                                            border_width=1,
+                                            border_color=("#D5DBDB", "gray20"))
+        self.supplier_management_frame.grid(row=1, column=0, sticky="ew")
 
 
         # Configurações internas dos frames
         self._setup_client_management(self.client_frame)
-        self._setup_template_management(self.template_management_frame) # NOVO SETUP DE TEMPLATE
+        self._setup_template_management(self.template_management_frame) 
+        self._setup_supplier_management(self.supplier_management_frame) # NOVO SETUP DE FORNECEDOR
         self._setup_note_generation(self.note_frame)
         
     # --- Setup de Headers e UI Geral (sem alteração) ---
@@ -177,7 +191,7 @@ class CreditNoteApp(ctk.CTk):
 
     def _setup_client_management(self, master):
         master.grid_columnconfigure(0, weight=1)
-        master.grid_rowconfigure(4, weight=1) # A linha 5 agora é para templates
+        master.grid_rowconfigure(4, weight=1) # A linha 5 agora é para templates/fornecedores
 
         # Título da Seção
         ctk.CTkLabel(master, 
@@ -383,7 +397,7 @@ class CreditNoteApp(ctk.CTk):
             messagebox.showinfo("Sucesso", f"Cliente {code} excluído com sucesso.")
 
 
-    # --- NOVO SETUP: Gerenciamento de Templates ---
+    # --- SETUP: Gerenciamento de Templates ---
     
     def _setup_template_management(self, master):
         master.grid_columnconfigure(0, weight=1)
@@ -391,7 +405,7 @@ class CreditNoteApp(ctk.CTk):
         ctk.CTkLabel(master, 
                      text="📄 Templates de Descrição", 
                      font=ctk.CTkFont(size=16, weight="bold"),
-                     text_color=CTK_COLOR_PRIMARY # Usa cor primária para destaque
+                     text_color=CTK_COLOR_PRIMARY 
                      ).grid(row=0, column=0, padx=15, pady=(15, 10), sticky="w")
         
         button_frame = ctk.CTkFrame(master, fg_color="transparent")
@@ -406,13 +420,8 @@ class CreditNoteApp(ctk.CTk):
         self._show_template_modal("Novo Template", None)
 
     def _edit_template_dialog(self):
-        # Obtém o nome selecionado no dropdown
         selected_name = self.template_var.get()
-        
-        # 1. Verifica se a opção selecionada é válida (não é a opção padrão nem vazia)
         is_valid_selection = selected_name not in ["Selecione um template", "Nenhum template disponível", ""]
-        
-        # 2. Verifica se o nome selecionado existe na lista real de templates
         template_exists = next((t for t in self.templates if t['nome'] == selected_name), None)
 
         if not is_valid_selection or not template_exists:
@@ -422,13 +431,8 @@ class CreditNoteApp(ctk.CTk):
         self._show_template_modal("Editar Template", template_exists)
             
     def _delete_template(self):
-        # Obtém o nome selecionado no dropdown
         selected_name = self.template_var.get()
-
-        # 1. Verifica se a opção selecionada é válida (não é a opção padrão nem vazia)
         is_valid_selection = selected_name not in ["Selecione um template", "Nenhum template disponível", ""]
-        
-        # 2. Verifica se o nome selecionado existe na lista real de templates
         template_exists = next((t for t in self.templates if t['nome'] == selected_name), None)
 
         if not is_valid_selection or not template_exists:
@@ -440,7 +444,6 @@ class CreditNoteApp(ctk.CTk):
             save_templates(self.templates)
             self._update_template_dropdown()
             
-            # Limpa o campo de descrição se o template excluído estava sendo usado
             if template_exists and self.description_textbox.get("1.0", tk.END).strip() == template_exists['descricao'].strip():
                  self.description_textbox.delete("1.0", tk.END)
                  self.description_textbox.insert("1.0", self.estado['ultima_descricao'])
@@ -455,7 +458,6 @@ class CreditNoteApp(ctk.CTk):
         modal.resizable(False, False)
         modal.geometry("450x400")
         
-        # Centraliza modal
         self.update_idletasks()
         x = self.winfo_x() + self.winfo_width() // 2 - modal.winfo_width() // 2
         y = self.winfo_y() + self.winfo_height() // 2 - modal.winfo_height() // 2
@@ -535,6 +537,137 @@ class CreditNoteApp(ctk.CTk):
             self.description_textbox.delete("1.0", tk.END)
             self.description_textbox.insert("1.0", selected_template['descricao'])
 
+    # --- NOVO SETUP: Gerenciamento de Fornecedores ---
+
+    def _setup_supplier_management(self, master):
+        master.grid_columnconfigure(0, weight=1)
+        
+        ctk.CTkLabel(master, 
+                     text="⚙️ Gerenciamento de Fornecedores", 
+                     font=ctk.CTkFont(size=16, weight="bold"),
+                     text_color=CTK_COLOR_PRIMARY
+                     ).grid(row=0, column=0, padx=15, pady=(15, 10), sticky="w")
+        
+        button_frame = ctk.CTkFrame(master, fg_color="transparent")
+        button_frame.grid(row=1, column=0, padx=15, pady=(0, 15), sticky="ew")
+        button_frame.grid_columnconfigure((0, 1, 2), weight=1)
+
+        ctk.CTkButton(button_frame, text="Novo Fornecedor", command=self._add_supplier_dialog, fg_color=CTK_COLOR_SECONDARY, hover_color="#145A32", corner_radius=8, font=ctk.CTkFont(size=12)).grid(row=0, column=0, padx=5, pady=5, sticky="ew")
+        ctk.CTkButton(button_frame, text="Editar", command=self._edit_supplier_dialog, fg_color=CTK_COLOR_ACCENT, hover_color="#7F8C8D", corner_radius=8, font=ctk.CTkFont(size=12)).grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        ctk.CTkButton(button_frame, text="Excluir", command=self._delete_supplier, fg_color=CTK_COLOR_DANGER, hover_color="#C0392B", corner_radius=8, font=ctk.CTkFont(size=12)).grid(row=0, column=2, padx=5, pady=5, sticky="ew")
+    
+    def _update_supplier_dropdown(self, selected_name=None):
+        """Atualiza as opções do Combobox de fornecedores."""
+        self.supplier_options = [s['nome'] for s in self.fornecedores]
+        
+        if not self.supplier_options:
+            self.supplier_options = ["Nenhum fornecedor cadastrado"]
+            self.supplier_var.set(self.supplier_options[0])
+            self.supplier_dropdown.configure(values=self.supplier_options)
+            return
+
+        # self.supplier_options.insert(0, "Selecione o Fornecedor") # Não é necessário no dropdown principal
+        self.supplier_dropdown.configure(values=self.supplier_options)
+        
+        if selected_name and selected_name in self.supplier_options:
+            self.supplier_var.set(selected_name)
+        elif self.supplier_var.get() not in self.supplier_options:
+            self.supplier_var.set(self.supplier_options[0])
+    
+    def _add_supplier_dialog(self):
+        self._show_supplier_modal("Cadastrar Novo Fornecedor", None)
+    
+    def _edit_supplier_dialog(self):
+        selected_name = self.supplier_var.get()
+        supplier_exists = next((s for s in self.fornecedores if s['nome'] == selected_name), None)
+
+        if not supplier_exists or selected_name == "Nenhum fornecedor cadastrado":
+            messagebox.showwarning("Atenção", "Selecione um fornecedor válido no menu suspenso (área de Nota) para editar.")
+            return
+
+        self._show_supplier_modal("Editar Fornecedor", supplier_exists)
+
+    def _delete_supplier(self):
+        selected_name = self.supplier_var.get()
+        supplier_exists = next((s for s in self.fornecedores if s['nome'] == selected_name), None)
+
+        if not supplier_exists or selected_name == "Nenhum fornecedor cadastrado":
+            messagebox.showwarning("Atenção", "Selecione um fornecedor válido no menu suspenso (área de Nota) para excluir.")
+            return
+            
+        if messagebox.askyesno("Confirmar Exclusão", f"Tem certeza que deseja excluir o fornecedor:\n'{selected_name}'?"):
+            self.fornecedores = [s for s in self.fornecedores if s['nome'] != selected_name]
+            save_fornecedores(self.fornecedores)
+            self._update_supplier_dropdown()
+            messagebox.showinfo("Sucesso", "Fornecedor excluído com sucesso.")
+
+    def _show_supplier_modal(self, title, supplier_data):
+        modal = Toplevel(self)
+        modal.title(title)
+        modal.transient(self)
+        modal.grab_set()
+        modal.resizable(False, False)
+        modal.geometry("450x350")
+        
+        self.update_idletasks()
+        x = self.winfo_x() + self.winfo_width() // 2 - modal.winfo_width() // 2
+        y = self.winfo_y() + self.winfo_height() // 2 - modal.winfo_height() // 2
+        modal.geometry(f'+{x}+{y}')
+
+        ctk.CTkLabel(modal, text="Nome do Fornecedor/Título:").pack(pady=(10, 0), padx=10)
+        name_entry = ctk.CTkEntry(modal, width=400, corner_radius=10)
+        name_entry.pack(padx=10)
+
+        ctk.CTkLabel(modal, text="Arquivo Modelo (.xlsx):").pack(pady=(10, 0), padx=10)
+        # O modelo define o mapeamento das células, por isso ele é crucial.
+        model_entry = ctk.CTkEntry(modal, width=400, corner_radius=10)
+        model_entry.pack(padx=10)
+        ctk.CTkLabel(modal, text="Ex: modelo.xlsx ou modelo2.xlsx", font=ctk.CTkFont(size=10)).pack(pady=(0, 10), padx=10)
+        
+        original_name = None
+        if supplier_data:
+            original_name = supplier_data['nome']
+            name_entry.insert(0, original_name)
+            model_entry.insert(0, supplier_data['modelo'])
+        else:
+             model_entry.insert(0, MODELO_FILE) # Default para o modelo 1
+
+        def save_supplier():
+            new_name = name_entry.get().strip()
+            model = model_entry.get().strip().lower()
+            
+            if not new_name or not model:
+                messagebox.showerror("Erro", "Nome e Modelo são obrigatórios.")
+                return
+            
+            # Validação simples do nome do arquivo
+            if not model.endswith('.xlsx'):
+                messagebox.showerror("Erro", "O nome do modelo deve terminar com '.xlsx'.")
+                return
+
+            # Checa duplicidade
+            is_duplicate = any(s['nome'] == new_name and s.get('nome') != original_name for s in self.fornecedores)
+            if is_duplicate:
+                messagebox.showerror("Erro", f"O nome de fornecedor '{new_name}' já existe.")
+                return
+                
+            if supplier_data:
+                # Edição
+                supplier_data['nome'] = new_name
+                supplier_data['modelo'] = model
+                messagebox.showinfo("Sucesso", f"Fornecedor '{new_name}' atualizado.")
+            else:
+                # Cadastro
+                self.fornecedores.append({"nome": new_name, "modelo": model})
+                messagebox.showinfo("Sucesso", f"Fornecedor '{new_name}' cadastrado.")
+
+            save_fornecedores(self.fornecedores)
+            self._update_supplier_dropdown(new_name)
+            modal.destroy()
+
+        ctk.CTkButton(modal, text="Salvar Fornecedor", command=save_supplier, fg_color=CTK_COLOR_SUCCESS, hover_color="#27AE60", corner_radius=10).pack(pady=20, padx=10)
+
+
     # --- Setup: Geração de Nota de Crédito (com alteração de row) ---
 
     def _setup_note_generation(self, master):
@@ -544,22 +677,39 @@ class CreditNoteApp(ctk.CTk):
         # Título da Seção
         ctk.CTkLabel(master, 
                      text="📝 Geração de Nota de Crédito", 
-                     font=ctk.CTkFont(size=19, weight="bold"), # Tamanho ligeiramente maior
+                     font=ctk.CTkFont(size=19, weight="bold"), 
                      text_color=CTK_COLOR_SECONDARY
                      ).grid(row=0, column=0, padx=25, pady=(25, 15), sticky="ew")
 
+        # NOVO: Seleção de Fornecedor e Modelo
+        supplier_frame = ctk.CTkFrame(master, fg_color="transparent")
+        supplier_frame.grid(row=1, column=0, padx=25, pady=10, sticky="ew")
+        supplier_frame.grid_columnconfigure(0, weight=1)
+        
+        ctk.CTkLabel(supplier_frame, text="Fornecedor e Modelo:", anchor="w", font=ctk.CTkFont(weight="bold")).grid(row=0, column=0, padx=5, pady=(5, 0), sticky="w")
+        
+        self.supplier_var = ctk.StringVar()
+        self.supplier_dropdown = ctk.CTkOptionMenu(supplier_frame, 
+                                                   variable=self.supplier_var,
+                                                   command=lambda x: None, # Nenhuma ação imediata no select
+                                                   fg_color=CTK_COLOR_PANEL,
+                                                   button_color=CTK_COLOR_SECONDARY,
+                                                   button_hover_color="#145A32",
+                                                   text_color=CTK_COLOR_SECONDARY,
+                                                   dropdown_fg_color=CTK_COLOR_PANEL)
+        self.supplier_dropdown.grid(row=1, column=0, padx=5, pady=(0, 10), sticky="ew")
+        self._update_supplier_dropdown() # Carrega opções iniciais
+
+
         # 1. Dados da Fatura (Data e Número)
         data_frame = ctk.CTkFrame(master, fg_color="transparent")
-        data_frame.grid(row=1, column=0, padx=25, pady=10, sticky="ew")
+        data_frame.grid(row=2, column=0, padx=25, pady=10, sticky="ew") # Ajuste de row de 1 para 2
         data_frame.grid_columnconfigure((0, 1), weight=1)
 
         # Data
         ctk.CTkLabel(data_frame, text="Data (DD/MM/AAAA):", anchor="w").grid(row=0, column=0, padx=5, pady=(5, 0), sticky="w")
         self.date_var = tk.StringVar(value=datetime.date.today().strftime("%d/%m/%Y"))
-        # REMOVE A TRACE EM TEMPO REAL
-        # self.date_var.trace_add("write", self._format_date_input) 
         self.date_entry = ctk.CTkEntry(data_frame, textvariable=self.date_var, corner_radius=10, fg_color=("#ECF0F1", "gray25"))
-        # ADICIONA O BIND PARA FORMATAR AO SAIR DO CAMPO
         self.date_entry.bind("<FocusOut>", self._format_date_input_on_focusout) 
         self.date_entry.grid(row=1, column=0, padx=5, pady=(0, 5), sticky="ew")
 
@@ -573,7 +723,7 @@ class CreditNoteApp(ctk.CTk):
 
         # 2. Dados do Cliente
         client_info_frame = ctk.CTkFrame(master, fg_color="transparent")
-        client_info_frame.grid(row=2, column=0, padx=25, pady=10, sticky="ew")
+        client_info_frame.grid(row=3, column=0, padx=25, pady=10, sticky="ew") # Ajuste de row de 2 para 3
         client_info_frame.grid_columnconfigure(0, weight=1)
 
         ctk.CTkLabel(client_info_frame, text="Cliente Selecionado:", font=ctk.CTkFont(weight="bold"), text_color=CTK_COLOR_PRIMARY).grid(row=0, column=0, padx=5, pady=(5, 0), sticky="w")
@@ -589,14 +739,13 @@ class CreditNoteApp(ctk.CTk):
 
         # Nome
         ctk.CTkLabel(code_name_frame, text="Razão Social:", anchor="w").grid(row=0, column=1, padx=(5, 0), pady=(0, 0), sticky="w")
-        # Ajusta a cor padrão para o label de nome (será alterado para verde no select)
         self.client_name_label = ctk.CTkLabel(code_name_frame, text="Nenhum cliente selecionado", anchor="w", fg_color=("#ECF0F1", "gray30"), corner_radius=10, text_color=("#2C3E50", "white"))
         self.client_name_label.grid(row=1, column=1, padx=(5, 0), pady=(0, 5), sticky="ew", ipady=5)
 
 
         # 3. Valor e Descrição
         value_desc_frame = ctk.CTkFrame(master, fg_color="transparent")
-        value_desc_frame.grid(row=3, column=0, padx=25, pady=10, sticky="ew")
+        value_desc_frame.grid(row=4, column=0, padx=25, pady=10, sticky="ew") # Ajuste de row de 3 para 4
         value_desc_frame.grid_columnconfigure(0, weight=1)
 
         # Valor da Fatura
@@ -608,7 +757,7 @@ class CreditNoteApp(ctk.CTk):
 
         # 4. Descrição/Histórico
         desc_header_frame = ctk.CTkFrame(master, fg_color="transparent")
-        desc_header_frame.grid(row=4, column=0, padx=25, pady=(5, 0), sticky="ew")
+        desc_header_frame.grid(row=5, column=0, padx=25, pady=(5, 0), sticky="ew") # Ajuste de row de 4 para 5
         desc_header_frame.grid_columnconfigure(0, weight=1)
         desc_header_frame.grid_columnconfigure(1, weight=1)
         
@@ -633,12 +782,12 @@ class CreditNoteApp(ctk.CTk):
         self._update_template_dropdown() # Carrega opções iniciais
         
         self.description_textbox = ctk.CTkTextbox(master, height=150, corner_radius=10, fg_color=("#ECF0F1", "gray25"))
-        self.description_textbox.grid(row=5, column=0, padx=25, pady=(0, 25), sticky="nsew")
+        self.description_textbox.grid(row=6, column=0, padx=25, pady=(0, 25), sticky="nsew") # Ajuste de row de 5 para 6
         self.description_textbox.insert("1.0", self.estado['ultima_descricao'])
 
         # 5. Botão de Ação (Ajuste de Row)
         action_frame = ctk.CTkFrame(master, fg_color="transparent")
-        action_frame.grid(row=7, column=0, padx=25, pady=10, sticky="ew")
+        action_frame.grid(row=8, column=0, padx=25, pady=10, sticky="ew") # Ajuste de row de 7 para 8
         action_frame.grid_columnconfigure((0, 1), weight=1)
 
         ctk.CTkButton(action_frame, 
@@ -658,7 +807,7 @@ class CreditNoteApp(ctk.CTk):
                       corner_radius=10
                       ).grid(row=0, column=1, padx=5, pady=5, sticky="ew", ipady=5)
 
-    # --- Funções de Formatação e Validação de Input ---
+    # --- Funções de Formatação e Validação de Input (inalterada) ---
 
     def _format_date_input_on_focusout(self, event):
         """
@@ -734,6 +883,19 @@ class CreditNoteApp(ctk.CTk):
             messagebox.showerror("Erro de Validação", "Selecione um cliente para prosseguir.")
             return
 
+        supplier_name = self.supplier_var.get()
+        if not supplier_name or supplier_name == "Nenhum fornecedor cadastrado":
+            messagebox.showerror("Erro de Validação", "Selecione um fornecedor para prosseguir.")
+            return
+            
+        # Encontra o modelo do fornecedor selecionado
+        selected_supplier = next((s for s in self.fornecedores if s['nome'] == supplier_name), None)
+        if not selected_supplier:
+             messagebox.showerror("Erro de Validação", "Fornecedor selecionado inválido.")
+             return
+        
+        model_filename = selected_supplier['modelo']
+
         data_input = self.date_var.get()
         invoice_number = self.invoice_number_var.get()
         description_text = self.description_textbox.get("1.0", tk.END).strip()
@@ -759,7 +921,7 @@ class CreditNoteApp(ctk.CTk):
             messagebox.showerror("Erro de Validação", "A Descrição/Histórico é obrigatória.")
             return
         
-        # 2. Chama a função de Backend para processar o XLSX
+        # 2. Chama a função de Backend para processar o XLSX (NOVOS PARÂMETROS)
         success, result_or_path = process_and_save_note(
             data_input, 
             invoice_number, 
@@ -767,7 +929,9 @@ class CreditNoteApp(ctk.CTk):
             self.selected_client['nome'], 
             description_text, 
             value_float, 
-            self.estado # O estado é atualizado dentro do backend
+            self.estado,
+            model_filename, # Novo parâmetro
+            supplier_name   # Novo parâmetro
         )
 
         if success:
@@ -802,7 +966,6 @@ class CreditNoteApp(ctk.CTk):
         """Tenta abrir o arquivo com o programa padrão (o que geralmente abre a caixa de diálogo de impressão)."""
         try:
             if os.name == 'nt':  # Windows
-                # os.startfile("notepad.exe") # Exemplo para abrir o programa
                 os.startfile(filepath, "print")
                 messagebox.showinfo("Comando de Impressão Enviado", "A caixa de diálogo da impressora deve ter sido aberta.")
             elif os.uname()[0] == 'Darwin':  # macOS
