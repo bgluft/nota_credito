@@ -1,0 +1,14 @@
+[
+    {
+        "nome": "Desconto Comercial",
+        "descricao": "DESCONTO COMERCIAL REFERENTE A ACERTO COMERCIAL DE PRODUTOS."
+    },
+    {
+        "nome": "Bonificação por Volume",
+        "descricao": "BONIFICAÇÃO POR VOLUME DE COMPRAS CONFORME ACORDO COMERCIAL DO PERÍODO."
+    },
+    {
+        "nome": "Ajuste de Preço",
+        "descricao": "AJUSTE NO VALOR DA FATURA DEVIDO À ALTERAÇÃO DE PREÇOS NA DATA DE EMISSÃO."
+    }
+]
