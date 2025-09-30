@@ -33,9 +33,10 @@ CTK_COLOR_DANGER = "#E74C3C"                     # Vermelho (Excluir)
 CTK_COLOR_ACCENT = "#95A5A6"                    # Cinza Chumbo (Imprimir)
 CTK_COLOR_HEADER = ("#BDC3C7", "#1E2A38")       # Cinza Claro Suave/Azul Escuro para Header 
 CTK_COLOR_PANEL = ("#FFFFFF", "#2E4053")        # Painel de Conteúdo (Mais contraste)
+CTK_COLOR_BUTTON_GENERATE = "#1ABC9C"           # Verde Água para gerar/imprimir
 
 # --- Cores para Listbox (Zebrado com mais contraste) ---
-COLOR_LIST_EVEN = "#EFEFEF"  # Cinza claro visível
+COLOR_LIST_EVEN = "#E8EAEB"  # Cinza claro mais perceptível
 COLOR_LIST_ODD = "#FFFFFF"   # Branco
 
 
@@ -181,8 +182,8 @@ class CreditNoteApp(ctk.CTk):
         # Título da Seção
         ctk.CTkLabel(master, 
                      text="📋 Gestão de Clientes", 
-                     font=ctk.CTkFont(size=18, weight="bold"),
-                     text_color=CTK_COLOR_SECONDARY # Cor mais escura para o painel claro
+                     font=ctk.CTkFont(size=19, weight="bold"), # Tamanho ligeiramente maior
+                     text_color=CTK_COLOR_SECONDARY
                      ).grid(row=0, column=0, padx=25, pady=(25, 15), sticky="ew")
 
         # Campo de busca
@@ -543,7 +544,7 @@ class CreditNoteApp(ctk.CTk):
         # Título da Seção
         ctk.CTkLabel(master, 
                      text="📝 Geração de Nota de Crédito", 
-                     font=ctk.CTkFont(size=18, weight="bold"),
+                     font=ctk.CTkFont(size=19, weight="bold"), # Tamanho ligeiramente maior
                      text_color=CTK_COLOR_SECONDARY
                      ).grid(row=0, column=0, padx=25, pady=(25, 15), sticky="ew")
 
@@ -643,8 +644,8 @@ class CreditNoteApp(ctk.CTk):
         ctk.CTkButton(action_frame, 
                       text="✅ Gerar Nota de Crédito (.xlsx)", 
                       command=self._process_note, 
-                      fg_color=CTK_COLOR_PRIMARY, 
-                      hover_color=CTK_COLOR_SECONDARY,
+                      fg_color=CTK_COLOR_BUTTON_GENERATE, # Cor mais clara para o botão principal
+                      hover_color=CTK_COLOR_PRIMARY, # Hover primário
                       font=ctk.CTkFont(weight="bold", size=15),
                       corner_radius=10
                       ).grid(row=0, column=0, padx=5, pady=5, sticky="ew", ipady=5)
