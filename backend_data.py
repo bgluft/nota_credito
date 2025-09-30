@@ -1,153 +1,201 @@
 import os
 import json
 import re
-from openpyxl import load_workbook, Workbook
-from openpyxl.styles import Alignment, Font
+from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
+import sys # Importação necessária para PyInstaller
 
-# --- Configurações de Arquivo ---
+# --- Utilitário de Caminho para PyInstaller ---
+def _get_resource_path(relative_path):
+    """Obtém o caminho absoluto do recurso, compatível com o PyInstaller."""
+    if hasattr(sys, '_MEIPASS'):
+        # Ambiente PyInstaller (executável)
+        # O caminho do recurso é relativo ao diretório temporário do PyInstaller
+        return os.path.join(sys._MEIPASS, relative_path)
+    # Ambiente de desenvolvimento padrão
+    return os.path.join(os.path.abspath("."), relative_path)
+# ---------------------------------------------
+
+
+# --- Constantes de Arquivos ---
 CLIENTES_FILE = "clientes.json"
 ESTADO_FILE = "estado.json"
-MODELO_FILE = "modelo.xlsx"
+MODELO_FILE = "modelo.xlsx" # Nome do arquivo que será empacotado
 SAIDA_FOLDER = "Notas_de_Credito_Geradas"
 
-# --- Funções de Persistência (JSON) ---
+# --- Dados Iniciais ---
+INITIAL_ESTADO = {
+    "ultima_fatura": 1,
+    "ultima_descricao": "DESCONTO COMERCIAL REFERENTE A ACERTO COMERCIAL DE PRODUTOS.",
+}
 
-def load_data(filename, default_data):
-    """Carrega dados de um arquivo JSON. Se não existir, retorna dados padrão."""
-    try:
-        if os.path.exists(filename):
-            with open(filename, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        else:
-            return default_data
-    except Exception as e:
-        print(f"Erro ao carregar {filename}: {e}")
-        return default_data
+# --- Gerenciamento de Dados (JSON) ---
 
-def save_data(filename, data):
-    """Salva dados em um arquivo JSON."""
-    try:
-        with open(filename, 'w', encoding='utf-8') as f:
-            json.dump(data, f, indent=4, ensure_ascii=False)
-    except Exception as e:
-        print(f"Erro ao salvar {filename}: {e}")
-
-# Gerenciamento de Clientes
 def load_clientes():
-    """Carrega a lista de clientes."""
-    return load_data(CLIENTES_FILE, [])
+    """Carrega a lista de clientes do arquivo JSON."""
+    if not os.path.exists(CLIENTES_FILE):
+        return []
+    try:
+        with open(CLIENTES_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Erro ao carregar clientes: {e}")
+        return []
 
 def save_clientes(clientes):
-    """Salva a lista de clientes."""
-    save_data(CLIENTES_FILE, clientes)
+    """Salva a lista de clientes no arquivo JSON."""
+    try:
+        with open(CLIENTES_FILE, 'w', encoding='utf-8') as f:
+            json.dump(clientes, f, indent=4, ensure_ascii=False)
+    except Exception as e:
+        print(f"Erro ao salvar clientes: {e}")
 
-# Gerenciamento de Estado (Fatura e Descrição)
 def load_estado():
-    """Carrega o estado do programa (última fatura e descrição)."""
-    return load_data(ESTADO_FILE, {"ultima_fatura": 1, "ultima_descricao": "Devolução de Mercadoria conforme NFe [NUMERO NFE] de [DATA NFE]."})
+    """Carrega o estado da última fatura e descrição do arquivo JSON."""
+    if not os.path.exists(ESTADO_FILE):
+        return INITIAL_ESTADO
+    try:
+        with open(ESTADO_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Erro ao carregar estado: {e}")
+        return INITIAL_ESTADO
 
 def save_estado(estado):
-    """Salva o estado atual do programa."""
-    save_data(ESTADO_FILE, estado)
+    """Salva o estado da última fatura e descrição no arquivo JSON."""
+    try:
+        with open(ESTADO_FILE, 'w', encoding='utf-8') as f:
+            json.dump(estado, f, indent=4, ensure_ascii=False)
+    except Exception as e:
+        print(f"Erro ao salvar estado: {e}")
 
-# --- Funções de Arquivo e Criação de Modelo ---
+def _create_initial_model():
+    """Cria um arquivo modelo XLSX mínimo se não existir no ambiente de DEV."""
+    # NÃO deve ser executado no ambiente PyInstaller, apenas em desenvolvimento.
+    if not hasattr(sys, '_MEIPASS') and not os.path.exists(MODELO_FILE):
+        try:
+            from openpyxl import Workbook
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "MODELO" 
+            
+            # Células de preenchimento obrigatórias
+            ws['H9'] = 'DATA'
+            ws['K9'] = 'FATURA'
+            ws['A13'] = 'COD_CLIENTE'
+            ws['A15'] = 'NOME_CLIENTE_FATURAR_A'
+            ws['G15'] = 'NOME_CLIENTE_ENVIADO_A'
+            ws['B28'] = 'DESCRICAO' 
+            ws['K50'] = 'VALOR' 
+            ws['J52'] = 'COD_CLIENTE_FOOTER' 
+            ws['L52'] = 'FATURA_FOOTER'
+            
+            # Simula mesclagens importantes
+            ws.merge_cells('H9:J9')
+            ws.merge_cells('K9:M9')
+            ws.merge_cells('A15:F19')
+            ws.merge_cells('G15:M19')
+            ws.merge_cells('B28:F45')
+            ws.merge_cells('K50:M50')
+            
+            wb.save(MODELO_FILE)
+            print(f"AVISO: Arquivo modelo '{MODELO_FILE}' criado. SUBSTITUA este arquivo pelo seu modelo real.")
+        except Exception as e:
+            print(f"Erro ao criar modelo inicial: {e}")
 
-def create_initial_xlsx_template():
-    """Cria um arquivo modelo XLSX mínimo para garantir a funcionalidade."""
-    if os.path.exists(MODELO_FILE):
-        return
-
-    print(f"Criando {MODELO_FILE} inicial. Por favor, substitua-o pelo seu modelo real.")
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "Modelo_Base"
-
-    # Define as células que o script irá preencher
-    ws['H9'] = 'Data'
-    ws['K9'] = 'Fatura N° (Topo)'
-    ws['A13'] = 'Código Cliente (Topo)'
-    ws['A15'] = 'Nome Cliente (Razão Social - Faturar)'
-    ws['G15'] = 'Nome Cliente (Razão Social - Enviado)' 
-    ws['B28'] = 'Descrição/Histórico'
-    ws['K50'] = 'Valor R$'
-    ws['J52'] = 'Código Cliente (Rodapé)'
-    ws['L52'] = 'Fatura N° (Rodapé)'
-
-    for cell in ['H9', 'K9', 'A13', 'A15', 'G15', 'B28', 'K50', 'J52', 'L52']:
-        ws[cell].alignment = Alignment(wrapText=True)
-        ws[cell].font = Font(bold=True)
-
-    ws.column_dimensions[get_column_letter(1)].width = 25
-    ws.column_dimensions[get_column_letter(2)].width = 35
-
-    wb.save(MODELO_FILE)
-    print(f"'{MODELO_FILE}' criado com sucesso.")
-
-# Garante que a pasta de saída e o modelo existam
-os.makedirs(SAIDA_FOLDER, exist_ok=True)
-create_initial_xlsx_template()
+# --- Processamento de XLSX ---
 
 def process_and_save_note(data_input, invoice_number, client_code, client_name, description_text, value_float, estado):
     """
-    Carrega o modelo XLSX, preenche os dados, salva o novo arquivo e atualiza o estado.
-    Retorna (True, output_path) em caso de sucesso ou (False, mensagem_de_erro).
+    Carrega o modelo (via PyInstaller ou ambiente local), preenche os dados e salva o novo arquivo XLSX.
     """
-    try:
-        wb = load_workbook(MODELO_FILE)
-        ws = wb.active
-    except FileNotFoundError:
-        return False, f"O arquivo modelo '{MODELO_FILE}' não foi encontrado."
-    except Exception as e:
-        return False, f"Erro ao abrir o arquivo modelo: {e}"
-
-    # --- GERAÇÃO DO NOME DA PLANILHA (ABA) ---
-    name_parts = re.sub(r'[^\w\s]', '', client_name).split()
-    sheet_name_base = '_'.join(name_parts[:2]).upper()
-    new_sheet_title = f"{sheet_name_base}_{invoice_number}"
     
-    if len(new_sheet_title) > 31:
-        new_sheet_title = new_sheet_title[:31]
+    # Obtém o caminho correto do modelo (PyInstaller ou local)
+    model_path = _get_resource_path(MODELO_FILE)
+    
+    # Se estiver em desenvolvimento e o modelo não existir, cria o fallback
+    if not os.path.exists(model_path):
+        _create_initial_model()
+        
+    # Tenta obter o caminho novamente após a criação do fallback (só em dev)
+    model_path = _get_resource_path(MODELO_FILE)
+
+    if not os.path.exists(model_path):
+         return False, f"Erro Fatal: O arquivo modelo '{MODELO_FILE}' não foi encontrado nem pôde ser criado."
+
 
     try:
-        ws.title = new_sheet_title
-    except Exception as e:
-        print(f"Aviso: Não foi possível renomear a planilha para '{new_sheet_title}': {e}. Usando o nome original.")
+        # Carrega o modelo usando o caminho obtido
+        wb = load_workbook(model_path)
+        ws = wb.active
+        
+        # 1. Preparação dos Nomes (para Planilha e Arquivo)
+        
+        # 1.1 Limpa o nome do cliente e pega as duas primeiras palavras
+        cleaned_name = re.sub(r'[\\/?*\[\]\':]', '', client_name).strip()
+        name_parts = [p for p in cleaned_name.split() if p] # Garante que as partes não sejam vazias
+        
+        # Pega as duas primeiras palavras, ou apenas a primeira se não houver duas
+        if len(name_parts) >= 2:
+            base_name = f"{name_parts[0]}_{name_parts[1]}"
+        elif len(name_parts) == 1:
+            base_name = name_parts[0]
+        else:
+            base_name = "CLIENTE_SEM_NOME"
 
 
-    # Mapeamento e Preenchimento das Células
-    cell_map = {
-        'H9': data_input, 'K9': invoice_number, 'L52': invoice_number,
-        'A13': client_code, 'J52': client_code,
-        'A15': client_name, 'G15': client_name, 
-        'B28': description_text,
-        'K50': value_float
-    }
+        # 1.2 Renomeia a Planilha (Tab)
+        sheet_name_raw = f"{base_name}_{invoice_number}"
+        new_sheet_name = sheet_name_raw[:31].replace(' ', '_')
+        ws.title = new_sheet_name
 
-    try:
-        for cell, value in cell_map.items():
-            ws[cell] = value
-            if cell == 'K50':
-                ws[cell].number_format = 'R$ #,##0.00'
-    except Exception as e:
-        return False, f"Falha ao preencher a célula. Verifique se o '{MODELO_FILE}' está fechado e acessível.\nDetalhe: {e}"
+        # 2. Preenchimento de Células
+        
+        data_map = {
+            'H9': data_input,                  # Data
+            'K9': invoice_number,              # Número da Fatura (Topo)
+            'A13': client_code,                # Código do Cliente
+            'J52': client_code,                # Código do Cliente (Parte inferior)
+            'A15': client_name,                # Nome/Razão Social (Faturar a)
+            'G15': client_name,                # Nome/Razão Social (Enviado a)
+            'B28': description_text,           # Descrição/Histórico
+            'K50': value_float,                # Valor da Fatura (Número)
+            'L52': invoice_number,             # Número da Fatura (Parte inferior)
+        }
 
-    # 3. Salvar a Nova Nota
-    file_name = f"Nota_Credito_{invoice_number}_Cliente_{client_code}.xlsx"
-    output_path = os.path.join(SAIDA_FOLDER, file_name)
+        for cell, value in data_map.items():
+            try:
+                ws[cell] = value
+            except Exception:
+                 pass # Ignora se a célula for o meio de uma mesclagem
 
-    try:
+        # Formata o valor como moeda
+        try:
+            ws['K50'].number_format = 'R$ #,##0.00'
+        except:
+            pass 
+
+        # 3. Define o Caminho de Saída (NOVA REGRA DE NOME DE ARQUIVO)
+        if not os.path.exists(SAIDA_FOLDER):
+            os.makedirs(SAIDA_FOLDER)
+
+        # Usando as duas primeiras palavras do cliente + número da nota
+        output_filename = f"{base_name}_{invoice_number}.xlsx"
+        output_path = os.path.join(SAIDA_FOLDER, output_filename)
+        
+        # 4. Salva o Arquivo
         wb.save(output_path)
-    except Exception as e:
-        return False, f"Não foi possível salvar a nota em '{output_path}'. Verifique as permissões.\nDetalhe: {e}"
 
-    # 4. Atualizar o Estado do Programa
-    try:
-        next_invoice = int(invoice_number) + 1
-        estado['ultima_fatura'] = next_invoice
-        estado['ultima_descricao'] = description_text
-        save_estado(estado)
-    except Exception as e:
-        print(f"Aviso: Falha ao atualizar o estado do programa: {e}")
+        # 5. Atualiza o Estado (Próxima Fatura e Descrição)
+        try:
+            current_invoice = int(invoice_number)
+            estado['ultima_fatura'] = current_invoice + 1
+            estado['ultima_descricao'] = description_text
+            save_estado(estado)
+        except ValueError:
+            pass 
 
-    return True, output_path
+        return True, output_path
+
+    except Exception as e:
+        return False, f"Erro ao processar o arquivo XLSX: {e}"

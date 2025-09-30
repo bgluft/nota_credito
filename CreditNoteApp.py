@@ -4,26 +4,15 @@ import re
 import tkinter as tk
 from tkinter import messagebox, Toplevel, Listbox, Scrollbar
 from PIL import Image, ImageTk 
-import sys # Importação necessária para PyInstaller
-
-# --- Função de utilidade para PyInstaller ---
-def _get_resource_path(relative_path):
-    """Obtém o caminho absoluto do recurso, compatível com o PyInstaller."""
-    if hasattr(sys, '_MEIPASS'):
-        # Ambiente PyInstaller (executável)
-        return os.path.join(sys._MEIPASS, relative_path)
-    # Ambiente de desenvolvimento padrão
-    return os.path.join(os.path.abspath("."), relative_path)
-# ---------------------------------------------
+# Importa sys, mas não define _get_resource_path, ele vem do backend
 
 # Importa todas as funções de backend e constantes
 try:
     import customtkinter as ctk
-    # Certifique-se de que o backend_data.py está no mesmo diretório
-    # A importação do backend é mantida como relativa. O PyInstaller resolve isso.
+    # Importa o utilitário de caminho e a constante do logo
     from backend_data import (
         load_clientes, save_clientes, load_estado, save_estado,
-        process_and_save_note, SAIDA_FOLDER, MODELO_FILE
+        process_and_save_note, SAIDA_FOLDER, _get_resource_path
     )
 except ImportError as e:
     print(f"Erro ao importar backend ou customtkinter: {e}")
@@ -31,6 +20,7 @@ except ImportError as e:
     exit()
 
 # --- Constantes de Arquivo ---
+# O logo precisa do caminho absoluto, obtido via _get_resource_path no setup
 LOGO_FILEPATH = "Gemini_Generated_Image_tlt5qdtlt5qdtlt5.png"
 
 # --- Cores Customizadas (Tema Verde Moderno Refinado) ---
@@ -127,7 +117,7 @@ class CreditNoteApp(ctk.CTk):
 
         # --- Lógica de Carregamento da Imagem ---
         try:
-            # *USANDO O NOVO UTILITÁRIO DE CAMINHO PARA COMPATIBILIDADE PYINSTALLER*
+            # *USANDO O UTILITÁRIO DE CAMINHO DO BACKEND PARA COMPATIBILIDADE PYINSTALLER*
             logo_path = _get_resource_path(LOGO_FILEPATH)
             
             # 1. Carrega a imagem e redimensiona (64x64)
@@ -484,7 +474,7 @@ class CreditNoteApp(ctk.CTk):
 
     def _format_date_input(self, *args):
         """
-        [CORRIGIDO] Formata o campo de data em DD/MM/AAAA em tempo real, 
+        Formata o campo de data em DD/MM/AAAA em tempo real, 
         mantendo a posição correta do cursor.
         """
         current = self.date_var.get()
