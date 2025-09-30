@@ -25,19 +25,19 @@ except ImportError as e:
 # O logo precisa do caminho absoluto, obtido via _get_resource_path no setup
 LOGO_FILEPATH = "Gemini_Generated_Image_tlt5qdtlt5qdtlt5.png"
 
-# --- Cores Customizadas (Tema Verde Moderno Refinado) ---
-CTK_COLOR_BACKGROUND = ("#F4F6F6", "#2C3E50")  # Fundo geral mais neutro (Claro/Chumbo escuro)
-CTK_COLOR_PRIMARY = "#27AE60"                   # Verde Esmeralda (Foco, botões principais, títulos)
-CTK_COLOR_SECONDARY = "#196F3D"                 # Verde Escuro (Hover e detalhes)
-CTK_COLOR_SUCCESS = "#27AE60"                   # Sucesso
+# --- Paleta de Cores Atualizada (Mais Profunda e Vibrante) ---
+CTK_COLOR_BACKGROUND = ("#ECF0F1", "#1C2833")  # Fundo geral cinza claro suave / Chumbo escuro
+CTK_COLOR_PRIMARY = "#2ECC71"                   # Verde Esmeralda (Principal, mais vibrante)
+CTK_COLOR_SECONDARY = "#27AE60"                 # Verde Esmeralda Escuro (Hover e Subtítulos)
+CTK_COLOR_SUCCESS = "#2ECC71"                   # Sucesso
 CTK_COLOR_DANGER = "#E74C3C"                     # Vermelho (Excluir)
-CTK_COLOR_ACCENT = "#95A5A6"                    # Cinza Chumbo (Imprimir)
-CTK_COLOR_HEADER = ("#BDC3C7", "#1E2A38")       # Cinza Claro Suave/Azul Escuro para Header 
-CTK_COLOR_PANEL = ("#FFFFFF", "#2E4053")        # Painel de Conteúdo (Mais contraste)
+CTK_COLOR_ACCENT = "#95A5A6"                    # Cinza Chumbo (Botões Secundários)
+CTK_COLOR_HEADER = ("#BDC3C7", "#17202A")       # Cinza Claro / Preto Chumbo para o Header 
+CTK_COLOR_PANEL = ("#FFFFFF", "#2E4053")        # Painel de Conteúdo (Fundo Branco/Azul Escuro)
 CTK_COLOR_BUTTON_GENERATE = "#1ABC9C"           # Verde Água para gerar/imprimir
 
 # --- Cores para Listbox (Zebrado com mais contraste) ---
-COLOR_LIST_EVEN = "#E8EAEB"  # Cinza claro mais perceptível
+COLOR_LIST_EVEN = "#E8EAEB"  # Cinza claro perceptível
 COLOR_LIST_ODD = "#FFFFFF"   # Branco
 
 
@@ -72,14 +72,14 @@ class CreditNoteApp(ctk.CTk):
         # --- Header com Logo e Título ---
         self._setup_header()
         
-        # --- Separador Visual ---
-        ctk.CTkFrame(self, height=2, fg_color=CTK_COLOR_PRIMARY).grid(
-            row=1, column=0, columnspan=2, sticky="ew", padx=0, pady=0
+        # --- Separador Visual (Mais Destaque) ---
+        ctk.CTkFrame(self, height=3, fg_color=CTK_COLOR_PRIMARY).grid( # Altura maior
+            row=1, column=0, columnspan=2, sticky="ew", padx=0, pady=(0, 5) # Padding inferior para separação
         )
 
         # --- Frames de Conteúdo Principal ---
         content_frame = ctk.CTkFrame(self, fg_color="transparent")
-        content_frame.grid(row=2, column=0, columnspan=2, padx=15, pady=15, sticky="nsew")
+        content_frame.grid(row=2, column=0, columnspan=2, padx=15, pady=(5, 15), sticky="nsew") # Ajuste de padding
         content_frame.grid_columnconfigure((0, 1), weight=1)
         content_frame.grid_rowconfigure(0, weight=1)
 
@@ -104,6 +104,7 @@ class CreditNoteApp(ctk.CTk):
         management_container.grid(row=5, column=0, padx=25, pady=(5, 25), sticky="ew")
         management_container.grid_columnconfigure(0, weight=1)
         
+        # TÍTULOS de Gestão de Templates/Fornecedores (Mais destaque)
         self.template_management_frame = ctk.CTkFrame(management_container, 
                                             fg_color=("#ECF0F1", "gray25"),
                                             corner_radius=10, 

@@ -1,8 +1,10 @@
 [
-    {
-        "nome": "Fornecedor Padrão (Modelo 1)",
+
+        {
+        "nome": "PRODUZA COMERCIO DE INSUMOS AGRÍCOLAS LTDA",
         "modelo": "modelo.xlsx"
     },
+
     {
         "nome": "BAYER S/A",
         "modelo": "modelo2.xlsx"
@@ -11,4 +13,5 @@
         "nome": "DU PONT DO BRASIL SA",
         "modelo": "modelo2.xlsx"
     }
+
 ]
