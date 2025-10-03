@@ -25,19 +25,19 @@ except ImportError as e:
 # O logo precisa do caminho absoluto, obtido via _get_resource_path no setup
 LOGO_FILEPATH = "Gemini_Generated_Image_tlt5qdtlt5qdtlt5.png"
 
-# --- Paleta de Cores Atualizada (Mais Profunda e Vibrante) ---
-CTK_COLOR_BACKGROUND = ("#ECF0F1", "#1C2833")  # Fundo geral cinza claro suave / Chumbo escuro
-CTK_COLOR_PRIMARY = "#2ECC71"                   # Verde Esmeralda (Principal, mais vibrante)
-CTK_COLOR_SECONDARY = "#27AE60"                 # Verde Esmeralda Escuro (Hover e Subtítulos)
-CTK_COLOR_SUCCESS = "#2ECC71"                   # Sucesso
-CTK_COLOR_DANGER = "#E74C3C"                     # Vermelho (Excluir)
+# --- Paleta de Cores Refinada (Minimalista e Moderna) ---
+CTK_COLOR_BACKGROUND = ("#F0F2F5", "#1C2833")  # Fundo geral: Cinza muito claro / Chumbo escuro
+CTK_COLOR_PRIMARY = "#00B894"                   # Verde Turquesa (Ação principal, Destaque)
+CTK_COLOR_SECONDARY = "#00A382"                 # Verde Escuro (Hover)
+CTK_COLOR_SUCCESS = "#00B894"                   # Sucesso
+CTK_COLOR_DANGER = "#D63031"                     # Vermelho (Excluir)
 CTK_COLOR_ACCENT = "#95A5A6"                    # Cinza Chumbo (Botões Secundários)
 CTK_COLOR_HEADER = ("#BDC3C7", "#17202A")       # Cinza Claro / Preto Chumbo para o Header 
 CTK_COLOR_PANEL = ("#FFFFFF", "#2E4053")        # Painel de Conteúdo (Fundo Branco/Azul Escuro)
-CTK_COLOR_BUTTON_GENERATE = "#1ABC9C"           # Verde Água para gerar/imprimir
+CTK_COLOR_BUTTON_GENERATE = "#00A382"           # Verde Secundário para gerar/imprimir
 
 # --- Cores para Listbox (Zebrado com mais contraste) ---
-COLOR_LIST_EVEN = "#E8EAEB"  # Cinza claro perceptível
+COLOR_LIST_EVEN = "#F7F8F9"  # Cinza muito sutil
 COLOR_LIST_ODD = "#FFFFFF"   # Branco
 
 
@@ -49,7 +49,14 @@ class CreditNoteApp(ctk.CTk):
 
         # --- Setup da Janela Principal ---
         self.title("Sistema de Gestão de Notas de Crédito")
-        self.geometry("1000x750")
+        
+        # APLICANDO TELA CHEIA (ZOOMED)
+        try:
+             self.state('zoomed') # Maximiza a janela na inicialização (Melhor no Windows/Linux)
+        except tk.TclError:
+             # Fallback para ambientes que não suportam 'zoomed'
+             self.geometry(f"{self.winfo_screenwidth()}x{self.winfo_screenheight()}+0+0")
+             
         ctk.set_appearance_mode("System")
         ctk.set_default_color_theme("blue") 
 
@@ -59,7 +66,7 @@ class CreditNoteApp(ctk.CTk):
         self.clientes = load_clientes()
         self.estado = load_estado()
         self.templates = load_templates() 
-        self.fornecedores = load_fornecedores() # NOVO: Carrega Fornecedores
+        self.fornecedores = load_fornecedores() 
         self.selected_client = None
         self.last_saved_file = None 
         self.logo_image = None
@@ -79,7 +86,7 @@ class CreditNoteApp(ctk.CTk):
 
         # --- Frames de Conteúdo Principal ---
         content_frame = ctk.CTkFrame(self, fg_color="transparent")
-        content_frame.grid(row=2, column=0, columnspan=2, padx=15, pady=(5, 15), sticky="nsew") # Ajuste de padding
+        content_frame.grid(row=2, column=0, columnspan=2, padx=20, pady=(5, 20), sticky="nsew") # Mais padding nas bordas
         content_frame.grid_columnconfigure((0, 1), weight=1)
         content_frame.grid_rowconfigure(0, weight=1)
 
@@ -87,46 +94,44 @@ class CreditNoteApp(ctk.CTk):
         self.client_frame = ctk.CTkFrame(content_frame, 
                                          fg_color=CTK_COLOR_PANEL, 
                                          corner_radius=15,
-                                         border_width=2,
-                                         border_color=("#D5DBDB", "#283747")) 
-        self.client_frame.grid(row=0, column=0, padx=10, pady=0, sticky="nsew")
+                                         border_width=1, # Borda mais sutil
+                                         border_color=("#E5E7E9", "#34495E")) # Borda sutil para elevação
+        self.client_frame.grid(row=0, column=0, padx=15, pady=0, sticky="nsew")
 
         # Frame de Geração de Nota (Direita)
         self.note_frame = ctk.CTkFrame(content_frame, 
                                        fg_color=CTK_COLOR_PANEL, 
                                        corner_radius=15,
-                                       border_width=2,
-                                       border_color=("#D5DBDB", "#283747"))
-        self.note_frame.grid(row=0, column=1, padx=10, pady=0, sticky="nsew")
+                                       border_width=1,
+                                       border_color=("#E5E7E9", "#34495E"))
+        self.note_frame.grid(row=0, column=1, padx=15, pady=0, sticky="nsew")
         
         # Frame extra para Gerenciamento de Templates na coluna Esquerda (dividido em duas linhas)
         management_container = ctk.CTkFrame(self.client_frame, fg_color="transparent")
-        management_container.grid(row=5, column=0, padx=25, pady=(5, 25), sticky="ew")
+        management_container.grid(row=5, column=0, padx=30, pady=(5, 30), sticky="ew") # Maior padding
         management_container.grid_columnconfigure(0, weight=1)
         
         # TÍTULOS de Gestão de Templates/Fornecedores (Mais destaque)
         self.template_management_frame = ctk.CTkFrame(management_container, 
                                             fg_color=("#ECF0F1", "gray25"),
                                             corner_radius=10, 
-                                            border_width=1,
-                                            border_color=("#D5DBDB", "gray20"))
+                                            border_width=0) # Removendo borda interna para visual mais limpo
         self.template_management_frame.grid(row=0, column=0, pady=(0, 15), sticky="ew")
 
         self.supplier_management_frame = ctk.CTkFrame(management_container, # NOVO FRAME
                                             fg_color=("#ECF0F1", "gray25"),
                                             corner_radius=10, 
-                                            border_width=1,
-                                            border_color=("#D5DBDB", "gray20"))
+                                            border_width=0)
         self.supplier_management_frame.grid(row=1, column=0, sticky="ew")
 
 
         # Configurações internas dos frames
         self._setup_client_management(self.client_frame)
         self._setup_template_management(self.template_management_frame) 
-        self._setup_supplier_management(self.supplier_management_frame) # NOVO SETUP DE FORNECEDOR
+        self._setup_supplier_management(self.supplier_management_frame) 
         self._setup_note_generation(self.note_frame)
         
-    # --- Setup de Headers e UI Geral (sem alteração) ---
+    # --- Setup de Headers e UI Geral ---
     def _setup_header(self):
         """Cria o cabeçalho superior para logo e título principal, centralizando o título."""
         header_frame = ctk.CTkFrame(self, fg_color=CTK_COLOR_HEADER, height=90, corner_radius=0)
@@ -138,22 +143,18 @@ class CreditNoteApp(ctk.CTk):
         center_frame.grid(row=0, column=0, sticky="nsew", padx=20)
         
         # Configuração para centralizar
-        center_frame.grid_columnconfigure(0, weight=1) # Espaço expansível à esquerda
-        center_frame.grid_columnconfigure(1, weight=0) # Coluna para Logo
-        center_frame.grid_columnconfigure(2, weight=0) # Coluna para Título
-        center_frame.grid_columnconfigure(3, weight=1) # Espaço expansível à direita
+        center_frame.grid_columnconfigure(0, weight=1) 
+        center_frame.grid_columnconfigure(1, weight=0) 
+        center_frame.grid_columnconfigure(2, weight=0) 
+        center_frame.grid_columnconfigure(3, weight=1) 
 
         # --- Lógica de Carregamento da Imagem ---
         try:
-            # *USANDO O UTILITÁRIO DE CAMINHO DO BACKEND PARA COMPATIBILIDADE PYINSTALLER*
             logo_path = _get_resource_path(LOGO_FILEPATH)
-            
-            # 1. Carrega a imagem e redimensiona (64x64)
             img = Image.open(logo_path)
             img = img.resize((64, 64), Image.Resampling.LANCZOS)
             self.logo_image = ImageTk.PhotoImage(img)
 
-            # 2. Exibe a imagem (Coluna 1)
             logo_label = ctk.CTkLabel(center_frame, 
                                       text="", 
                                       image=self.logo_image,
@@ -161,7 +162,6 @@ class CreditNoteApp(ctk.CTk):
             logo_label.grid(row=0, column=1, padx=(0, 15), pady=12, sticky="e") 
         
         except FileNotFoundError:
-             # Exibe placeholder se o arquivo não for encontrado
              logo_label = ctk.CTkLabel(center_frame, 
                          text="[LOGO NÃO ENCONTRADO]", 
                          font=ctk.CTkFont(size=10),
@@ -169,7 +169,6 @@ class CreditNoteApp(ctk.CTk):
              logo_label.grid(row=0, column=1, padx=(0, 15), pady=12, sticky="e") 
 
         except Exception:
-            # Lida com outros erros, como arquivo corrompido
             logo_label = ctk.CTkLabel(center_frame, 
                          text="[ERRO AO CARREGAR LOGO]", 
                          font=ctk.CTkFont(size=10),
@@ -180,56 +179,55 @@ class CreditNoteApp(ctk.CTk):
         # Título principal (Coluna 2)
         title_label = ctk.CTkLabel(center_frame, 
                      text="GESTOR DE NOTAS DE CRÉDITO", 
-                     font=ctk.CTkFont(size=24, weight="bold", family="Arial"), # Fonte maior e mais impactante
+                     font=ctk.CTkFont(size=26, weight="bold", family="Arial"), # Fonte maior e mais impactante
                      text_color=CTK_COLOR_PRIMARY,
                      anchor="center")
         
-        # Colocando o Título logo ao lado do logo
         title_label.grid(row=0, column=2, padx=(15, 0), pady=12, sticky="w") 
 
 
-    # --- Setup: Gerenciamento de Clientes (com alteração de row) ---
+    # --- Setup: Gerenciamento de Clientes ---
 
     def _setup_client_management(self, master):
         master.grid_columnconfigure(0, weight=1)
-        master.grid_rowconfigure(4, weight=1) # A linha 5 agora é para templates/fornecedores
+        master.grid_rowconfigure(4, weight=1) 
 
         # Título da Seção
         ctk.CTkLabel(master, 
                      text="📋 Gestão de Clientes", 
-                     font=ctk.CTkFont(size=19, weight="bold"), # Tamanho ligeiramente maior
+                     font=ctk.CTkFont(size=20, weight="bold", family="Arial"), # Fonte maior e mais moderna
                      text_color=CTK_COLOR_SECONDARY
-                     ).grid(row=0, column=0, padx=25, pady=(25, 15), sticky="ew")
+                     ).grid(row=0, column=0, padx=30, pady=(30, 15), sticky="ew") # Maior padding
 
         # Campo de busca
-        self.client_search_entry = ctk.CTkEntry(master, placeholder_text="Buscar por Código ou Nome...", corner_radius=10, fg_color=("#ECF0F1", "gray25"))
-        self.client_search_entry.grid(row=1, column=0, padx=25, pady=(0, 15), sticky="ew")
+        self.client_search_entry = ctk.CTkEntry(master, placeholder_text="Buscar por Código ou Nome...", corner_radius=10, fg_color=("#ECF0F1", "gray25"), height=35) # Altura maior
+        self.client_search_entry.grid(row=1, column=0, padx=30, pady=(0, 15), sticky="ew")
         self.client_search_entry.bind("<KeyRelease>", self._filter_client_list)
 
         # Botões de Ação
         button_frame = ctk.CTkFrame(master, fg_color="transparent")
-        button_frame.grid(row=2, column=0, padx=25, pady=5, sticky="ew")
+        button_frame.grid(row=2, column=0, padx=30, pady=5, sticky="ew")
         button_frame.grid_columnconfigure((0, 1, 2), weight=1)
 
         ctk.CTkButton(button_frame, text="Novo", command=self._add_client_dialog, fg_color=CTK_COLOR_PRIMARY, hover_color=CTK_COLOR_SECONDARY, corner_radius=8).grid(row=0, column=0, padx=5, pady=5, sticky="ew")
         ctk.CTkButton(button_frame, text="Editar", command=self._edit_client_dialog, fg_color=CTK_COLOR_PRIMARY, hover_color=CTK_COLOR_SECONDARY, corner_radius=8).grid(row=0, column=1, padx=5, pady=5, sticky="ew")
         ctk.CTkButton(button_frame, text="Excluir", command=self._delete_client, fg_color=CTK_COLOR_DANGER, hover_color="#C0392B", corner_radius=8).grid(row=0, column=2, padx=5, pady=5, sticky="ew")
 
-        ctk.CTkLabel(master, text="Clientes Cadastrados:", anchor="w", font=ctk.CTkFont(weight="bold")).grid(row=3, column=0, padx=25, pady=(15, 5), sticky="ew")
+        ctk.CTkLabel(master, text="Clientes Cadastrados:", anchor="w", font=ctk.CTkFont(weight="bold")).grid(row=3, column=0, padx=30, pady=(15, 5), sticky="ew")
 
         # Listbox para clientes (Listbox nativa para zebrado)
-        list_frame = ctk.CTkFrame(master, corner_radius=10, fg_color=COLOR_LIST_ODD) # Fundo do frame branco
-        list_frame.grid(row=4, column=0, padx=25, pady=(0, 5), sticky="nsew") # Ajuste do pady para encaixar templates
+        list_frame = ctk.CTkFrame(master, corner_radius=10, fg_color=COLOR_LIST_ODD) 
+        list_frame.grid(row=4, column=0, padx=30, pady=(0, 5), sticky="nsew") 
         list_frame.grid_columnconfigure(0, weight=1)
         list_frame.grid_rowconfigure(0, weight=1)
 
         self.client_listbox = Listbox(
             list_frame, 
-            height=12, # Reduzido o height
+            height=12, 
             borderwidth=0, 
             highlightthickness=0, 
             selectmode=tk.SINGLE, 
-            font=("Inter", 12),
+            font=("Arial", 12), # Usando Arial/Inter
             fg="#202020",
             selectbackground=CTK_COLOR_SECONDARY,
             selectforeground="white"
@@ -678,13 +676,13 @@ class CreditNoteApp(ctk.CTk):
         # Título da Seção
         ctk.CTkLabel(master, 
                      text="📝 Geração de Nota de Crédito", 
-                     font=ctk.CTkFont(size=19, weight="bold"), 
+                     font=ctk.CTkFont(size=20, weight="bold", family="Arial"), # Fonte maior e mais moderna
                      text_color=CTK_COLOR_SECONDARY
-                     ).grid(row=0, column=0, padx=25, pady=(25, 15), sticky="ew")
+                     ).grid(row=0, column=0, padx=30, pady=(30, 15), sticky="ew")
 
         # NOVO: Seleção de Fornecedor e Modelo
         supplier_frame = ctk.CTkFrame(master, fg_color="transparent")
-        supplier_frame.grid(row=1, column=0, padx=25, pady=10, sticky="ew")
+        supplier_frame.grid(row=1, column=0, padx=30, pady=10, sticky="ew")
         supplier_frame.grid_columnconfigure(0, weight=1)
         
         ctk.CTkLabel(supplier_frame, text="Fornecedor e Modelo:", anchor="w", font=ctk.CTkFont(weight="bold")).grid(row=0, column=0, padx=5, pady=(5, 0), sticky="w")
@@ -694,23 +692,25 @@ class CreditNoteApp(ctk.CTk):
                                                    variable=self.supplier_var,
                                                    command=lambda x: None, # Nenhuma ação imediata no select
                                                    fg_color=CTK_COLOR_PANEL,
-                                                   button_color=CTK_COLOR_SECONDARY,
-                                                   button_hover_color="#145A32",
-                                                   text_color=CTK_COLOR_SECONDARY,
-                                                   dropdown_fg_color=CTK_COLOR_PANEL)
+                                                   # AJUSTE: Cor do botão mais clara e seta visível
+                                                   button_color=CTK_COLOR_BACKGROUND, # Cor de fundo neutra
+                                                   button_hover_color=("#D5DBDB", "gray25"), # Cinza claro no hover
+                                                   text_color=CTK_COLOR_PRIMARY, # Cor do texto e da seta (sempre visível)
+                                                   dropdown_fg_color=CTK_COLOR_PANEL,
+                                                   height=35) # Altura maior
         self.supplier_dropdown.grid(row=1, column=0, padx=5, pady=(0, 10), sticky="ew")
         self._update_supplier_dropdown() # Carrega opções iniciais
 
 
         # 1. Dados da Fatura (Data e Número)
         data_frame = ctk.CTkFrame(master, fg_color="transparent")
-        data_frame.grid(row=2, column=0, padx=25, pady=10, sticky="ew") # Ajuste de row de 1 para 2
+        data_frame.grid(row=2, column=0, padx=30, pady=10, sticky="ew")
         data_frame.grid_columnconfigure((0, 1), weight=1)
 
         # Data
         ctk.CTkLabel(data_frame, text="Data (DD/MM/AAAA):", anchor="w").grid(row=0, column=0, padx=5, pady=(5, 0), sticky="w")
         self.date_var = tk.StringVar(value=datetime.date.today().strftime("%d/%m/%Y"))
-        self.date_entry = ctk.CTkEntry(data_frame, textvariable=self.date_var, corner_radius=10, fg_color=("#ECF0F1", "gray25"))
+        self.date_entry = ctk.CTkEntry(data_frame, textvariable=self.date_var, corner_radius=10, fg_color=("#ECF0F1", "gray25"), height=35)
         self.date_entry.bind("<FocusOut>", self._format_date_input_on_focusout) 
         self.date_entry.grid(row=1, column=0, padx=5, pady=(0, 5), sticky="ew")
 
@@ -719,12 +719,12 @@ class CreditNoteApp(ctk.CTk):
             .format(self.estado['ultima_fatura']), anchor="w")
         self.invoice_label.grid(row=0, column=1, padx=5, pady=(5, 0), sticky="w")
         self.invoice_number_var = ctk.StringVar(value=str(self.estado['ultima_fatura']))
-        self.invoice_number_entry = ctk.CTkEntry(data_frame, textvariable=self.invoice_number_var, corner_radius=10, fg_color=("#ECF0F1", "gray25"))
+        self.invoice_number_entry = ctk.CTkEntry(data_frame, textvariable=self.invoice_number_var, corner_radius=10, fg_color=("#ECF0F1", "gray25"), height=35)
         self.invoice_number_entry.grid(row=1, column=1, padx=5, pady=(0, 5), sticky="ew")
 
         # 2. Dados do Cliente
         client_info_frame = ctk.CTkFrame(master, fg_color="transparent")
-        client_info_frame.grid(row=3, column=0, padx=25, pady=10, sticky="ew") # Ajuste de row de 2 para 3
+        client_info_frame.grid(row=3, column=0, padx=30, pady=10, sticky="ew")
         client_info_frame.grid_columnconfigure(0, weight=1)
 
         ctk.CTkLabel(client_info_frame, text="Cliente Selecionado:", font=ctk.CTkFont(weight="bold"), text_color=CTK_COLOR_PRIMARY).grid(row=0, column=0, padx=5, pady=(5, 0), sticky="w")
@@ -736,29 +736,29 @@ class CreditNoteApp(ctk.CTk):
         # Código
         ctk.CTkLabel(code_name_frame, text="Código:", anchor="w").grid(row=0, column=0, padx=(0, 5), pady=(0, 0), sticky="w")
         self.client_code_var = ctk.StringVar(value="")
-        ctk.CTkEntry(code_name_frame, textvariable=self.client_code_var, state="readonly", corner_radius=10, fg_color=("#ECF0F1", "gray30")).grid(row=1, column=0, padx=(0, 5), pady=(0, 5), sticky="ew")
+        ctk.CTkEntry(code_name_frame, textvariable=self.client_code_var, state="readonly", corner_radius=10, fg_color=("#ECF0F1", "gray30"), height=35).grid(row=1, column=0, padx=(0, 5), pady=(0, 5), sticky="ew")
 
         # Nome
         ctk.CTkLabel(code_name_frame, text="Razão Social:", anchor="w").grid(row=0, column=1, padx=(5, 0), pady=(0, 0), sticky="w")
-        self.client_name_label = ctk.CTkLabel(code_name_frame, text="Nenhum cliente selecionado", anchor="w", fg_color=("#ECF0F1", "gray30"), corner_radius=10, text_color=("#2C3E50", "white"))
+        self.client_name_label = ctk.CTkLabel(code_name_frame, text="Nenhum cliente selecionado", anchor="w", fg_color=("#ECF0F1", "gray30"), corner_radius=10, text_color=("#2C3E50", "white"), height=35)
         self.client_name_label.grid(row=1, column=1, padx=(5, 0), pady=(0, 5), sticky="ew", ipady=5)
 
 
         # 3. Valor e Descrição
         value_desc_frame = ctk.CTkFrame(master, fg_color="transparent")
-        value_desc_frame.grid(row=4, column=0, padx=25, pady=10, sticky="ew") # Ajuste de row de 3 para 4
+        value_desc_frame.grid(row=4, column=0, padx=30, pady=10, sticky="ew")
         value_desc_frame.grid_columnconfigure(0, weight=1)
 
         # Valor da Fatura
         ctk.CTkLabel(value_desc_frame, text="Valor da Fatura (R$):", anchor="w").grid(row=0, column=0, padx=5, pady=(5, 0), sticky="w")
         self.value_var = tk.StringVar(value="0,00")
-        self.value_entry = ctk.CTkEntry(value_desc_frame, textvariable=self.value_var, corner_radius=10, fg_color=("#ECF0F1", "gray25"))
+        self.value_entry = ctk.CTkEntry(value_desc_frame, textvariable=self.value_var, corner_radius=10, fg_color=("#ECF0F1", "gray25"), height=35)
         self.value_entry.bind("<FocusOut>", self._format_currency_input_on_focusout)
         self.value_entry.grid(row=1, column=0, padx=5, pady=(0, 10), sticky="ew")
 
         # 4. Descrição/Histórico
         desc_header_frame = ctk.CTkFrame(master, fg_color="transparent")
-        desc_header_frame.grid(row=5, column=0, padx=25, pady=(5, 0), sticky="ew") # Ajuste de row de 4 para 5
+        desc_header_frame.grid(row=5, column=0, padx=30, pady=(5, 0), sticky="ew")
         desc_header_frame.grid_columnconfigure(0, weight=1)
         desc_header_frame.grid_columnconfigure(1, weight=1)
         
@@ -775,29 +775,32 @@ class CreditNoteApp(ctk.CTk):
                                                    variable=self.template_var,
                                                    command=self._insert_template_description,
                                                    fg_color=CTK_COLOR_PANEL,
-                                                   button_color=CTK_COLOR_PRIMARY,
-                                                   button_hover_color=CTK_COLOR_SECONDARY,
+                                                   # AJUSTE: Cor do botão mais clara e seta visível
+                                                   button_color=CTK_COLOR_BACKGROUND,
+                                                   button_hover_color=("#D5DBDB", "gray25"),
                                                    text_color=CTK_COLOR_PRIMARY,
-                                                   dropdown_fg_color=CTK_COLOR_PANEL)
+                                                   dropdown_fg_color=CTK_COLOR_PANEL,
+                                                   height=35)
         self.template_dropdown.grid(row=1, column=1, sticky="ew", padx=(10, 5), pady=5)
         self._update_template_dropdown() # Carrega opções iniciais
         
-        self.description_textbox = ctk.CTkTextbox(master, height=150, corner_radius=10, fg_color=("#ECF0F1", "gray25"))
-        self.description_textbox.grid(row=6, column=0, padx=25, pady=(0, 25), sticky="nsew") # Ajuste de row de 5 para 6
+        self.description_textbox = ctk.CTkTextbox(master, corner_radius=10, fg_color=("#ECF0F1", "gray25"))
+        self.description_textbox.grid(row=6, column=0, padx=30, pady=(0, 30), sticky="nsew") 
         self.description_textbox.insert("1.0", self.estado['ultima_descricao'])
 
         # 5. Botão de Ação (Ajuste de Row)
         action_frame = ctk.CTkFrame(master, fg_color="transparent")
-        action_frame.grid(row=8, column=0, padx=25, pady=10, sticky="ew") # Ajuste de row de 7 para 8
+        action_frame.grid(row=8, column=0, padx=30, pady=10, sticky="ew") 
         action_frame.grid_columnconfigure((0, 1), weight=1)
 
         ctk.CTkButton(action_frame, 
                       text="✅ Gerar Nota de Crédito (.xlsx)", 
                       command=self._process_note, 
-                      fg_color=CTK_COLOR_BUTTON_GENERATE, # Cor mais clara para o botão principal
-                      hover_color=CTK_COLOR_PRIMARY, # Hover primário
+                      fg_color=CTK_COLOR_BUTTON_GENERATE, 
+                      hover_color=CTK_COLOR_PRIMARY, 
                       font=ctk.CTkFont(weight="bold", size=15),
-                      corner_radius=10
+                      corner_radius=10,
+                      height=45 # Altura maior para o botão principal
                       ).grid(row=0, column=0, padx=5, pady=5, sticky="ew", ipady=5)
                       
         ctk.CTkButton(action_frame, 
@@ -805,7 +808,8 @@ class CreditNoteApp(ctk.CTk):
                       command=self._print_last_note, 
                       fg_color=CTK_COLOR_ACCENT, 
                       hover_color="#7F8C8D",
-                      corner_radius=10
+                      corner_radius=10,
+                      height=45
                       ).grid(row=0, column=1, padx=5, pady=5, sticky="ew", ipady=5)
 
     # --- Funções de Formatação e Validação de Input (inalterada) ---
